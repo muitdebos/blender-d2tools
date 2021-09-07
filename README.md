@@ -4,7 +4,7 @@ Tools to assist the render pipeline from Blender to Diablo 2. At the moment this
 
 In the future I might add some examples.
 
-![D2Tools Panel preview][d2tools_panel.png]
+![D2Tools Panel preview](https://github.com/iuitdebos/blender-d2tools/blob/main/d2tools_panel.png)
 
 
 ## How to install
@@ -25,7 +25,7 @@ In the future I might add some examples.
   - `Rotatebox` is an empty object created at the Scene root. It will contain the camera and lighting. These settings are based off semi-official settings used by Blizzard.
 
   - `Scale example` generates a very blocky example of approximately the size of a human, once rendered, in the game.  
-![Scale example][size_example.png]
+![Scale example](https://github.com/iuitdebos/blender-d2tools/blob/main/size_example.png)
 
   - `Scene setup` prepares your .blend file by changing the settings a bit.
 
