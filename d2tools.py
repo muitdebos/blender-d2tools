@@ -82,15 +82,15 @@ class VIEW3D_PT_D2ToolsGenerate(bpy.types.Panel):
    
     def draw(self, context):
         layout = self.layout
-       
-        row = layout.row()
-        row.label(text = "WIP")
         
         row = layout.row()
-        row.label(text = "World Ambient")
+        row.prop(context.scene, "d2tools_generateRotatebox")
         
         row = layout.row()
-        row.label(text = "Value: 0.021219")
+        row.prop(context.scene, "d2tools_generateExamples")
+        
+        row = layout.row()
+        row.prop(context.scene, "d2tools_generateSceneSetup")
         
         row = layout.row()
         row.operator("d2tools.ops_generate")
@@ -151,9 +151,9 @@ class VIEW3D_PT_D2ToolsRender(bpy.types.Panel):
 #################
 
 class D2TOOLS_OT_generate(bpy.types.Operator):
-    bl_label = "Generate scene"
+    bl_label = "Generate"
     bl_idname = "d2tools.ops_generate"
-    bl_description = "Generates the rotatebox, camera and light settings required for D2 rendering"
+    bl_description = "Generates the selected properties to bootstrap the D2 render pipeline"
     
     def generate_objects(self, context):
         
@@ -281,9 +281,14 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
     
     def execute(self, context):
         
-        self.generate_objects(context)
-        self.generate_examples(context)
-        self.scene_setup(context)
+        if (context.scene.d2tools_generateRotatebox):
+            self.generate_objects(context)
+            
+        if (context.scene.d2tools_generateExamples):
+            self.generate_examples(context)
+        
+        if (context.scene.d2tools_generateSceneSetup):
+            self.scene_setup(context)
         
         return {'FINISHED'}
 
@@ -352,12 +357,31 @@ class D2TOOLS_OT_render(bpy.types.Operator):
 ##  REGISTER  ##
 ################
 
+d2tools_generateRotatebox = bpy.props.BoolProperty(
+    name = "Rotatebox",
+    description = "Generates a ROTATEBOX which is used in the D2Tools render process to render out all directions. After generation, don't touch this unless you know what you're doing",
+    default = True,
+)
+
+d2tools_generateExamples = bpy.props.BoolProperty(
+    name = "Scale example",
+    description = "Generates an example mesh that approximates the height of ingame characters to give a sense of scale",
+    default = True,
+)
+
+d2tools_generateSceneSetup = bpy.props.BoolProperty(
+    name = "Scene setup",
+    description = "Sets up the world, scene and render settings",
+    default = True,
+)
+
 d2tools_outputDir = bpy.props.StringProperty(
     name = "Output directory",
     description = "'//' at the start is a relative path.",
     default = "//renders/",
     subtype = "DIR_PATH",
 )
+
 d2tools_fileName = bpy.props.StringProperty(
     name = "File name",
     description = "Output will be <file_name>_<direction>_<frame_number>.\n\nRecommendation is the name the animation will have, using D2 naming structure: <token><bodypart><armor><animation><hitclass>. As an example, Corrupt Rogue uses CRTRLITNUHTH",
@@ -394,6 +418,9 @@ registerClasses = [
 ]
 
 def register():
+    bpy.types.Scene.d2tools_generateRotatebox = d2tools_generateRotatebox
+    bpy.types.Scene.d2tools_generateExamples = d2tools_generateExamples
+    bpy.types.Scene.d2tools_generateSceneSetup = d2tools_generateSceneSetup
     bpy.types.Scene.d2tools_outputDir = d2tools_outputDir
     bpy.types.Scene.d2tools_fileName = d2tools_fileName
     bpy.types.Scene.d2tools_directions = d2tools_directions
@@ -403,6 +430,9 @@ def register():
         bpy.utils.register_class(c)
    
 def unregister():
+    del bpy.types.Scene.d2tools_generateRotatebox
+    del bpy.types.Scene.d2tools_generateExamples
+    del bpy.types.Scene.d2tools_generateSceneSetup
     del bpy.types.Scene.d2tools_outputDir
     del bpy.types.Scene.d2tools_fileName
     del bpy.types.Scene.d2tools_directions
