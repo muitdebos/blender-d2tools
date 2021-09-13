@@ -20,20 +20,21 @@ In the future I might add some examples.
 ## How to use
 
 1. Go to the Diablo 2 tab in View3D tools panel.
-2. If this is the first time, check out the Generate tab. Most likely you want all selected and hit "Generate".
+2. Choose if you want a World setup or Item setup. World is anything isometric-- monsters, characters, environments. Items are anything face-on, primarily inventory graphics.
+3. If this is the first time, check out the Generate tab. Most likely you want all selected and hit "Generate".
 
-  - `Rotatebox` is an empty object created at the Scene root. It will contain the camera and lighting. These settings are based off semi-official settings used by Blizzard.
+  - `Rotatebox` is an empty object created at the Scene root. It will contain the camera and lighting. For "World", these settings are based off semi-official settings used by Blizzard. "Item" inventory graphics don't have standardized render settings.
 
-  - `Scale example` generates a very blocky example of approximately the size of a human, once rendered, in the game.  
+  - `Scale example` generates a very blocky example of approximately the size of a human, once rendered, in the game, or for the "Item" template it generates a 2x4 inventory tile size collection of cubes.  
 ![Scale example](https://github.com/iuitdebos/blender-d2tools/blob/main/size_example.png)
 
   - `Scene setup` prepares your .blend file by changing the settings a bit.
 
-3. Whenever you want to render out the frames, go to the Render Properties tab. I highly suggest filling in the animation frame naming convention Blizzard used, e.g. CRTRLITNUHTH for Corrupt Rogue idle animation.
-4. Choose the settings you want, then head to the Render tab.
-5. If you are rendering an opaque graphic, I recommend checking "Transparent". If you want a glowy overlay like an aura or certain monster glow effects, uncheck "Transparent" as the game uses blend modes to do the effects.
-6. Once you're satisfied, SAVE FIRST, then hit "Render Directions". There is no UI feedback, but Blender is now rendering out all the frames according to the Render Properties.
-7. Blender has a tendency to crash. If it crashed somewhere halfway, you can use the "Skip Directions" to jump ahead to where it crashed.
+4. Whenever you want to render out the frames, go to the Render Properties tab. I highly suggest filling in the animation frame naming convention Blizzard used, e.g. CRTRLITNUHTH for Corrupt Rogue idle animation.
+5. Choose the settings you want, then head to the Render tab.
+6. If you are rendering an opaque graphic, I recommend checking "Transparent". If you want a glowy overlay like an aura or certain monster glow effects, uncheck "Transparent" as the game uses blend modes to do the effects.
+7. Once you're satisfied, SAVE FIRST, then hit "Render Directions". There is no UI feedback, but Blender is now rendering out all the frames according to the Render Properties.
+8. Blender has a tendency to crash. If it crashed somewhere halfway, you can use the "Skip Directions" to jump ahead to where it crashed.
 
 
 ## Importing renders into the game

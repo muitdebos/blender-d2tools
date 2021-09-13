@@ -57,6 +57,10 @@ d2_ambient = (0.0212, 0.0212, 0.0212, 1)
 # Background for opaque renders
 d2_background = (0, 0, 0, 1)
 
+# Inventory tile size in pixels
+d2_inv_tilesize = 28
+
+
 ##########
 ##  UI  ##
 ##########
@@ -70,6 +74,9 @@ class VIEW3D_PT_D2ToolsPanel(bpy.types.Panel):
    
     def draw(self, context):
         layout = self.layout
+        
+        row = layout.row()
+        row.prop(context.scene, "d2tools_types", expand = True)
 
 
 class VIEW3D_PT_D2ToolsGenerate(bpy.types.Panel):
@@ -113,20 +120,23 @@ class VIEW3D_PT_D2ToolsRenderProperties(bpy.types.Panel):
         row = layout.row()
         row.prop(context.scene, "d2tools_outputDir")
         
-        row = layout.row()
-        row.label(text = "Directions to render")
-        row = layout.row()
-        row.prop(context.scene, "d2tools_directions", expand = True)
-        
-        row = layout.row()
-        row.prop(context.scene, "d2tools_skipDirections")
-        
-        row = layout.row()
-        row.prop(context.scene, "frame_start", text = "Frame start")
-        row = layout.row()
-        row.prop(context.scene, "frame_end", text = "Frame end")
-        
-        
+        if (context.scene.d2tools_types == "D2ISO"):
+            row = layout.row()
+            row.label(text = "Directions to render")
+            row = layout.row()
+            row.prop(context.scene, "d2tools_directions", expand = True)
+            row = layout.row()
+            row.prop(context.scene, "d2tools_skipDirections")
+            row = layout.row()
+            row.prop(context.scene, "frame_start", text = "Frame start")
+            row = layout.row()
+            row.prop(context.scene, "frame_end", text = "Frame end")
+            
+            
+        if (context.scene.d2tools_types == "D2ITEM"):
+            row = layout.row()
+            row.operator("d2tools.ops_set_inv_render")
+            
         
 class VIEW3D_PT_D2ToolsRender(bpy.types.Panel):
     bl_label = "Render"
@@ -142,8 +152,13 @@ class VIEW3D_PT_D2ToolsRender(bpy.types.Panel):
         row = layout.row()
         row.prop(context.scene.render, "film_transparent")
         
-        row = layout.row()
-        row.operator("d2tools.ops_render")
+        if (context.scene.d2tools_types == "D2ISO"):
+            row = layout.row()
+            row.operator("d2tools.ops_render")
+            
+        if (context.scene.d2tools_types == "D2ITEM"):
+            row = layout.row()
+            row.operator("render.render")
 
           
 #################
@@ -155,7 +170,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
     bl_idname = "d2tools.ops_generate"
     bl_description = "Generates the selected properties to bootstrap the D2 render pipeline"
     
-    def generate_objects(self, context):
+    def generate_objects_iso(self, context):
         
         # Generate rotatebox
         rotatebox = bpy.data.objects.new('ROTATEBOX', None)
@@ -167,13 +182,25 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         cam_data = bpy.data.cameras.new('camera')
         cam = bpy.data.objects.new('CAMERA', cam_data)
         bpy.context.collection.objects.link(cam)
-        bpy.context.scene.camera=cam
+        bpy.context.scene.camera = cam
         cam.location = (0, -30, 20)
         cam.rotation_euler[0] = math.radians(60)
         cam.rotation_euler[1] = math.radians(0)
         cam.rotation_euler[2] = math.radians(0)
         cam.data.type = 'ORTHO'
         cam.data.ortho_scale = 7
+        
+        # Generate floor tile camera
+        fs_cam_data = bpy.data.cameras.new('camera')
+        fs_cam = bpy.data.objects.new('FS_CAMERA', fs_cam_data)
+        bpy.context.collection.objects.link(fs_cam)
+        bpy.context.scene.camera = fs_cam
+        fs_cam.location = (0, -34.65, 20)
+        fs_cam.rotation_euler[0] = math.radians(60)
+        fs_cam.rotation_euler[1] = math.radians(0)
+        fs_cam.rotation_euler[2] = math.radians(0)
+        fs_cam.data.type = 'ORTHO'
+        fs_cam.data.ortho_scale = 2.8
         
         # Generate light source
         light_data = bpy.data.lights.new('light', type='SUN')
@@ -186,15 +213,69 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         
         # Parent camera and light to rotatebox, then rotate box to direction 0
         cam.parent = rotatebox
+        fs_cam.parent = rotatebox
         light.parent = rotatebox
         rotatebox.rotation_euler[0] = math.radians(0)
         rotatebox.rotation_euler[1] = math.radians(0)
         rotatebox.rotation_euler[2] = math.radians(45)
         
+        # Don't allow user to meddle with settings by default
+        cam.hide_select = True
+        fs_cam.hide_select = True
+        light.hide_select = True
+        rotatebox.hide_select = True
+        
+        return True
+    
+    def generate_objects_item(self, context):
+        
+        # Generate rotatebox
+        rotatebox = bpy.data.objects.new('ROTATEBOX', None)
+        bpy.context.collection.objects.link(rotatebox)
+        rotatebox.empty_display_size = 0.5
+        rotatebox.empty_display_type = 'PLAIN_AXES'
+        
+        # Generate camera
+        cam_data = bpy.data.cameras.new('camera')
+        cam = bpy.data.objects.new('CAMERA', cam_data)
+        bpy.context.collection.objects.link(cam)
+        bpy.context.scene.camera = cam
+        cam.location = (0, -10, 0)
+        cam.rotation_euler[0] = math.radians(90)
+        cam.rotation_euler[1] = math.radians(0)
+        cam.rotation_euler[2] = math.radians(0)
+        cam.data.type = 'ORTHO'
+        cam.data.ortho_scale = 2.3
+        
+        # Generate primary light source
+        light_data = bpy.data.lights.new('light', type='POINT')
+        light = bpy.data.objects.new('MAIN_LIGHT', light_data)
+        bpy.context.collection.objects.link(light)
+        light.location = (0.1, -0.7, -0.3)
+        light.energy = 50
+        light.shadow_soft_size = 0.1
+        
+        # sun backup
+        # light.location = (2.3, -2.78, 6.8)
+        # light.rotation_euler[0] = math.radians(0)
+        # light.rotation_euler[1] = math.radians(60)
+        # light.rotation_euler[2] = math.radians(-75)
+        # light.energy = 2
+        # light.angle = math.radians(10)
+        
+        # Parent camera and light to rotatebox
+        cam.parent = rotatebox
+        light.parent = rotatebox
+        
+        # Don't allow user to meddle with settings by default
+        cam.hide_select = True
+        light.hide_select = True
+        rotatebox.hide_select = True
+        
         return True
     
     
-    def generate_examples(self, context):
+    def generate_examples_iso(self, context):
         
         # Create root object for approximate scale example
         scales = bpy.data.objects.new('_Approximate_Scale_', None)
@@ -203,70 +284,90 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         scales.empty_display_type = 'ARROWS'
         scales.hide_render = True
         
+        # Example cubes representing approximately the height and stature of a human
+        def new_bodypart(name, scale, location):
+            bpy.ops.mesh.primitive_cube_add(
+                size = 1,
+                enter_editmode = False,
+                align = 'WORLD',
+                location = location,
+                scale = scale,
+            )
+            bodypart = bpy.context.active_object
+            bodypart.name = name
+            bodypart.show_wire = True
+            bodypart.display_type = 'WIRE'
+            bodypart.parent = scales
+            bodypart.hide_render = True
+        
         # Generate cubes representing approximately the height and stature of a human
-        bpy.ops.mesh.primitive_cube_add(
-            size=1,
-            enter_editmode=False,
-            align='WORLD',
-            location=(0, 0, 1.7),
-            scale=(0.2, 0.25, 0.25),
-        )
-        humanHead = bpy.context.active_object
-        humanHead.name = 'Human_Head'
-        humanHead.show_wire = True
-        humanHead.display_type = 'WIRE'
-        humanHead.parent = scales
+        new_bodypart('Human_Head', (0.2, 0.25, 0.25), (0, 0, 1.7))
+        new_bodypart('Human_Torso', (0.5, 0.25, 0.7), (0, 0, 1.15))
+        new_bodypart('Human_Leg_L', (0.15, 0.15, 0.8), (0.15, 0, 0.4))
+        new_bodypart('Human_Leg_R', (0.15, 0.15, 0.8), (-0.15, 0, 0.4))
         
-        bpy.ops.mesh.primitive_cube_add(
-            size=1,
-            enter_editmode=False,
-            align='WORLD',
-            location=(0, 0, 1.15),
-            scale=(0.5, 0.25, 0.7),
+        # Floor tile
+        bpy.ops.mesh.primitive_plane_add(
+            size = 2,
+            enter_editmode = False,
+            align = 'WORLD',
         )
-        humanTorso = bpy.context.active_object
-        humanTorso.name = 'Human_Torso'
-        humanTorso.show_wire = True
-        humanTorso.display_type = 'WIRE'
-        humanTorso.parent = scales
-        
-        bpy.ops.mesh.primitive_cube_add(
-            size=1,
-            enter_editmode=False,
-            align='WORLD',
-            location=(0.15, 0, 0.4),
-            scale=(0.15, 0.15, 0.8),
-        )
-        humanLegL = bpy.context.active_object
-        humanLegL.name = 'Human_Leg_L'
-        humanLegL.show_wire = True
-        humanLegL.display_type = 'WIRE'
-        humanLegL.parent = scales
-        
-        bpy.ops.mesh.primitive_cube_add(
-            size=1,
-            enter_editmode=False,
-            align='WORLD',
-            location=(-0.15, 0, 0.4),
-            scale=(0.15, 0.15, 0.8),
-        )
-        humanLegR = bpy.context.active_object
-        humanLegR.name = 'Human_Leg_R'
-        humanLegR.show_wire = True
-        humanLegR.display_type = 'WIRE'
-        humanLegR.parent = scales
+        tileExample = bpy.context.active_object
+        tileExample.name = 'FS_Tile'
+        tileExample.show_wire = True
+        tileExample.display_type = 'WIRE'
+        tileExample.parent = scales
         
         return True
     
+    def generate_examples_item(self, context):
+        
+        # Inv tile size in Blender units using ortho cam of scale 2.3
+        tileSize = 0.2875
+        
+        # Create root object for approximate scale example
+        scales = bpy.data.objects.new('_Inventory_Tiles_', None)
+        bpy.context.collection.objects.link(scales)
+        scales.empty_display_size = 0.5
+        scales.empty_display_type = 'ARROWS'
+        scales.hide_render = True
+        
+        # Generate cubes representing approximately the height and stature of a human
+        def new_inv_tile(name, location):
+            bpy.ops.mesh.primitive_cube_add(
+                size = 1,
+                enter_editmode = False,
+                align = 'WORLD',
+                location = location,
+                scale = (tileSize * 2, tileSize * 2, tileSize * 2),
+            )
+            newTile = bpy.context.active_object
+            newTile.name = name
+            newTile.show_wire = True
+            newTile.display_type = 'WIRE'
+            newTile.parent = scales
+            newTile.hide_render = True
+        
+        new_inv_tile("Tile1", (-tileSize, 0, tileSize * 3))
+        new_inv_tile("Tile2", (tileSize, 0, tileSize * 3))
+        new_inv_tile("Tile3", (-tileSize, 0, tileSize * 1))
+        new_inv_tile("Tile4", (tileSize, 0, tileSize * 1))
+        new_inv_tile("Tile5", (-tileSize, 0, tileSize * -1))
+        new_inv_tile("Tile6", (tileSize, 0, tileSize * -1))
+        new_inv_tile("Tile7", (-tileSize, 0, tileSize * -3))
+        new_inv_tile("Tile8", (tileSize, 0, tileSize * -3))
+        
+        
+        return True
     
-    def scene_setup(self, context):
+    def scene_setup_common(self, context):
         
         # Set up output settings
         bpy.context.scene.render.engine = 'CYCLES'
-        bpy.context.scene.render.resolution_x = 256
-        bpy.context.scene.render.resolution_y = 256
-        bpy.context.scene.frame_end = 8
         bpy.context.scene.render.fps = 25
+        
+        # Denoise
+        bpy.context.scene.cycles.use_denoising = True
         
         # Disable anti-alias
         bpy.context.scene.cycles.pixel_filter_type = 'GAUSSIAN'
@@ -278,17 +379,52 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         
         return True
     
+    def scene_setup_iso(self, context):
+        
+        self.scene_setup_common(context)
+        
+        # Output settings
+        bpy.context.scene.render.resolution_x = 256
+        bpy.context.scene.render.resolution_y = 256
+        bpy.context.scene.frame_end = 8
+        
+        return True
+    
+    def scene_setup_item(self, context):
+        
+        self.scene_setup_common(context)
+        
+        # Set up output settings
+        bpy.context.scene.render.resolution_x = d2_inv_tilesize * 2
+        bpy.context.scene.render.resolution_y = d2_inv_tilesize * 4
+        bpy.context.scene.frame_start = 1
+        bpy.context.scene.frame_end = 1
+        
+        return True
+    
     
     def execute(self, context):
         
         if (context.scene.d2tools_generateRotatebox):
-            self.generate_objects(context)
+            if (context.scene.d2tools_types == "D2ISO"):
+                self.generate_objects_iso(context)
+            elif (context.scene.d2tools_types == "D2ITEM"):
+                self.generate_objects_item(context)
             
         if (context.scene.d2tools_generateExamples):
-            self.generate_examples(context)
+            if (context.scene.d2tools_types == "D2ISO"):
+                self.generate_examples_iso(context)
+            elif (context.scene.d2tools_types == "D2ITEM"):
+                self.generate_examples_item(context)
         
         if (context.scene.d2tools_generateSceneSetup):
-            self.scene_setup(context)
+            if (context.scene.d2tools_types == "D2ISO"):
+                self.scene_setup_iso(context)
+            elif (context.scene.d2tools_types == "D2ITEM"):
+                self.scene_setup_item(context)
+        
+        # Deselect anything
+        bpy.context.active_object.select_set(False)
         
         return {'FINISHED'}
 
@@ -330,7 +466,7 @@ class D2TOOLS_OT_render(bpy.types.Operator):
                 bpy.context.scene.frame_set( f ) # Set frame
                 
                 # Output definitions
-                frameNum   = str( f ).zfill(4) # Zero-padds frame number (5 -> 0005)
+                frameNum = str( f ).zfill(4) # Zero-padds frame number (5 -> 0005)
                 frameName = "{prefix}_{dir}_{f}{ext}".format(
                     prefix = fileName,
                     dir = i,
@@ -351,11 +487,51 @@ class D2TOOLS_OT_render(bpy.types.Operator):
         print('Finished rendering')
         
         return {'FINISHED'}
+
+
+class D2TOOLS_OT_set_inv_render(bpy.types.Operator):
+    bl_label = "Set inventory space"
+    bl_idname = "d2tools.ops_set_inv_render"
+    bl_description = "Sets the render output to be one of the inventory space arangements"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    horizontal_tiles: bpy.props.IntProperty(
+        name = 'Horizontal tiles',
+        description = 'Number of horizontal inventory spaces',
+        default = 2,
+        min = 1,
+        max = 2,
+    )
+    vertical_tiles: bpy.props.IntProperty(
+        name = 'Vertical tiles',
+        description = 'Number of vertical inventory spaces',
+        default = 4,
+        min = 1,
+        max = 4,
+    )
+    
+    def execute(self, context):
+        
+        bpy.context.scene.render.resolution_x = d2_inv_tilesize * self.horizontal_tiles
+        bpy.context.scene.render.resolution_y = d2_inv_tilesize * self.vertical_tiles
+        
+        return {'FINISHED'}
     
     
 ################
 ##  REGISTER  ##
 ################
+
+
+d2tools_types = bpy.props.EnumProperty(
+    name = 'Graphic type',
+    description = 'The type of content to render',
+    items = [
+        ('D2ISO', 'World', 'Anything in the game world; characters, missiles, objects, environments'),
+        ('D2ITEM', 'Item', 'Items are rendered straight on'),
+    ],
+    default = 'D2ISO',
+)
 
 d2tools_generateRotatebox = bpy.props.BoolProperty(
     name = "Rotatebox",
@@ -386,7 +562,7 @@ d2tools_fileName = bpy.props.StringProperty(
     name = "File name",
     description = "Output will be <file_name>_<direction>_<frame_number>.\n\nRecommendation is the name the animation will have, using D2 naming structure: <token><bodypart><armor><animation><hitclass>. As an example, Corrupt Rogue uses CRTRLITNUHTH",
 )
-    
+
 d2tools_directions = bpy.props.EnumProperty(
     name = 'Directions',
     description = 'Number of directions to render',
@@ -415,9 +591,11 @@ registerClasses = [
     VIEW3D_PT_D2ToolsRender,
     D2TOOLS_OT_generate,
     D2TOOLS_OT_render,
+    D2TOOLS_OT_set_inv_render,
 ]
 
 def register():
+    bpy.types.Scene.d2tools_types = d2tools_types
     bpy.types.Scene.d2tools_generateRotatebox = d2tools_generateRotatebox
     bpy.types.Scene.d2tools_generateExamples = d2tools_generateExamples
     bpy.types.Scene.d2tools_generateSceneSetup = d2tools_generateSceneSetup
@@ -430,6 +608,7 @@ def register():
         bpy.utils.register_class(c)
    
 def unregister():
+    del bpy.types.Scene.d2tools_types
     del bpy.types.Scene.d2tools_generateRotatebox
     del bpy.types.Scene.d2tools_generateExamples
     del bpy.types.Scene.d2tools_generateSceneSetup
