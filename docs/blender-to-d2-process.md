@@ -1,6 +1,35 @@
 # Blender to D2 Isometric
 
-Some documentation on the process of getting things from Blender into Diablo 2. Many thanks to the old Blizzard North and the Phrozen Keep community for the help.
+Some documentation on the process of getting things from Blender into Diablo 2.
+
+## Table of Contents  
+  - [Chapters 0: Set-up](#chapters-0-set-up)
+    - [Required tools](#required-tools)
+    - [Concepts helpful to understand](#concepts-helpful-to-understand)
+    - [Guides / Tutorials / Further reading](#guides--tutorials--further-reading)
+  - [Chapter 1: 3D Section](#chapter-1-3d-section)
+    - [Scene Setup](#scene-setup)
+    - [Character creation](#character-creation)
+    - [Rendering](#rendering)
+  - [Chapter 2: Graphic editing](#chapter-2-graphic-editing)
+    - [GIF Preparation](#gif-preparation)
+    - [GIF Exporting](#gif-exporting)
+  - [Chapter 3: DCC and COF](#chapter-3-dcc-and-cof)
+    - [Convert to DCC](#convert-to-dcc)
+    - [COF Editing](#cof-editing)
+  - [Chapter 4: Text editing](#chapter-4-text-editing)
+    - [AnimData.D2](#animdatad2)
+    - [MonStats / .txt files](#monstats--txt-files)
+  - [Chapter 5: Design tips](#chapter-5-design-tips)
+  - [Chapter 6: Reference](#chapter-6-reference)
+    - [Units palette](#units-palette)
+    - [Isometric 3D Setup](#isometric-3d-setup)
+    - [Directions](#directions)
+    - [Animation Modes](#animation-modes)
+    - [Hit-Class Codes](#hit-class-codes)
+    - [Armor-Class Codes](#armor-class-codes)
+
+Many thanks to the old Blizzard North and the Phrozen Keep community for the help.
 
 Special thanks to
 - Phil Shenk (ex-Blizzard North Lead Character Artist) for sharing info on the rendering process for D2

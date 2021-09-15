@@ -4,6 +4,13 @@ Tools to assist the render pipeline from Blender to Diablo 2. At the moment this
 
 In the future I might add some examples. But for now, see [docs/blender-to-d2-process.md](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/blender-to-d2-process.md) for documentation on how to take your renders into Diablo 2. Be warned, despite the d2tools.py automation it's still a lot of work.
 
+## Table of Contents
+- [blender-d2tools](#blender-d2tools)
+  - [Table of Contents](#table-of-contents)
+  - [How to install](#how-to-install)
+  - [How to use](#how-to-use)
+  - [Importing renders into the game](#importing-renders-into-the-game)
+
 ![D2Tools Panel preview](https://github.com/iuitdebos/blender-d2tools/blob/main/d2tools_panel.png)
 
 
@@ -39,4 +46,4 @@ In the future I might add some examples. But for now, see [docs/blender-to-d2-pr
 
 ## Importing renders into the game
 
-This is quite a large topic that I will get back to, but for now you can check out [Animation Conversion Tutorial](https://d2mods.info/resources/infinitum/tut_files/dcc_tutorial/) by Joel Falcou, Alkalund and Nefarius. Or you can check out the Phrozen Keep forums or discord for more info.
+I've made a separate documentation for the entire process. See [/docs/blender-to-d2-process.md](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/blender-to-d2-process.md). This has an almost step-by-step plan to follow in order to get the renders into the game.
