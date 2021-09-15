@@ -2,7 +2,7 @@
 
 Tools to assist the render pipeline from Blender to Diablo 2. At the moment this is mostly the one script, d2tools.py. The script is human-readable so any concerns, questions or specific info is there to see.
 
-In the future I might add some examples.
+In the future I might add some examples. But for now, see [docs/blender-to-d2-process.md](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/blender-to-d2-process.md) for documentation on how to take your renders into Diablo 2. Be warned, despite the d2tools.py automation it's still a lot of work.
 
 ![D2Tools Panel preview](https://github.com/iuitdebos/blender-d2tools/blob/main/d2tools_panel.png)
 
