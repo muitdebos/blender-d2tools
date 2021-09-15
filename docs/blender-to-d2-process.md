@@ -230,6 +230,12 @@ Now you should have a .COF file that is using your animations.
 
 ## Chapter 6: Reference
 
+### Units palette
+As I understand it, the "units" palette doesn't actually exist in the game, but it only has colors that are shared between acts. That is why this palette is recommended, and required for inventory graphics.
+
+[units.pal](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/units.pal)
+[units.act](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/units.act)
+
 ### Animation Modes:
 
 - A1 – Attack 1
