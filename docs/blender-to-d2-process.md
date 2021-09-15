@@ -118,7 +118,7 @@ There are a lot of steps here, which I also automated with my [Blender python sc
 - Render out the animation (Render > Render Animation) to an image sequence (.PNG's is fine, we need to process them anyway)
 - Move those renders to a directory, naming it with _0 for direction.
 - Rotate the RotateBox to the next direction. Monsters usually have 8 directions, player characters 16, missiles 32.
-  |Directions |   	  |       |       |       |       |       |       |       |
+  |Directions | Z-rotations|  |       |       |       |       |       |       |
   |-----------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
   | 0 .. 7  	| 45 	  | 135 	| 225 	| 315   | 0 	  | 90 	  | 180 	| 270 	|
   | 8 .. 15 	| 22.5 	| 67.5 	| 112.5	| 157.5 | 202.5 | 247.5 | 292.5 | 337.5 |
@@ -231,7 +231,29 @@ Now you should have a .COF file that is using your animations.
 
 ## Chapter 6: Reference
 
-### Animation Modes:
+
+### Isometric 3D Setup
+- Sun (/ directional) light.
+  - Position: (8.05, -11.788, 24)
+  - Rotation: (0, 30.7, -55.7)
+  - Light settings: Default (1 Strength, full white light)
+- Camera settings
+  - Position: (0, -30, 20)
+  - Rotation: (60, 0, 0)
+  - Set to "Ortographic" projection, ortho scale of 7.0
+- Ambient light of 40 / 256 rgb (0.0212 / 1 gamma-corrected)
+
+### Directions
+Rotate the rotatebox in the Z-axis
+
+|Directions | Z-rotations|  |       |       |       |       |       |       |
+  |-----------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+  | 0 .. 7  	| 45 	  | 135 	| 225 	| 315   | 0 	  | 90 	  | 180 	| 270 	|
+  | 8 .. 15 	| 22.5 	| 67.5 	| 112.5	| 157.5 | 202.5 | 247.5 | 292.5 | 337.5 |
+  | 16 .. 23 	| 11.25 | 33.75 | 56.25	| 78.75 | 101.25| 123.75| 146.25| 168.75|
+  | 24 .. 31 	| 191.25| 213.75| 236.25| 258.75| 281.25| 303.75| 326.25| 348.75|
+
+### Animation Modes
 
 - A1 – Attack 1
 - A2 – Attack 2
@@ -271,7 +293,7 @@ These are for organizing different weapons used by the same creature, most monst
 - XBW - Crossbow
  
 
-### Armor-Class Codes:
+### Armor-Class Codes
 
 You will only need the first three codes (LIT,MED,HVY) for monsters, the rest are player codes, or used for complex monsters.
 
