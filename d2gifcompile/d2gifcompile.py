@@ -6,7 +6,7 @@ from PIL import Image
 # Initialize parser
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Glob string to search the files for. Defaults to './*.png'")
-parser.set_defaults(input = "./*.png")
+parser.set_defaults(input = "./renders/*.png")
 parser.add_argument("-o", "--output", dest = "output", help = "Name of resulting animated .gif. Defaults to first image like so: @1TRLITNUHTH_0_0001.png becomes @1TRLITNUHTH.gif.")
 parser.add_argument("-v", "--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted. (Default)")
@@ -15,6 +15,9 @@ parser.set_defaults(boost_brightness = True)
 args = parser.parse_args()
 
 can_boost_brightness = args.boost_brightness
+
+if (args.verbose):
+    print("Not boosting image brightness.")
 
 ## Brightness boost to ensure no content becomes transparent in D2
 d2darkest = 4 # RGB: 4 / 256 is the darkest non-transparent black in d2 color palette
