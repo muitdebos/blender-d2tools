@@ -8,8 +8,8 @@ In Diablo 2, RGB(0, 0, 0) becomes transparent. To prevent this, this tool boosts
 
 ## How to use
 
-1. You need to have Python3.
-2. Additionally, install Pillow
+1. You need to have [Python3 (site)](https://www.python.org/downloads/).
+2. Additionally, install [Pillow (site)](https://pillow.readthedocs.io/en/stable/installation.html).
 3. Download this folder (./d2gifcompile) and enter it with your terminal of choice.
 4. Dump all your renders in a folder like `'./renders/'`
 5. Run: `./d2gifcompile.py -i "./renders/*.png"`
