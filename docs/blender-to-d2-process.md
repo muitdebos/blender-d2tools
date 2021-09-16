@@ -160,6 +160,8 @@ At the end of this chapter you should have rendered images in png format, of all
 
 ## Chapter 2: Graphic editing
 
+This chapter was written before development of [d2gifcompile.py](https://github.com/iuitdebos/blender-d2tools/tree/main/d2gifcompile). Use that tool instead of this entire chapter to skip ahead to chapter 3 :). If however you don't want to, here are the steps to do it manually:
+
 This example uses Photoshop CS 6, but the steps are not too complicated so if you don't have PS or this specific version, follow that tool's version of these instructions.
 
 ### GIF Preparation
