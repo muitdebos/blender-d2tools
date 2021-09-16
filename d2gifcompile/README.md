@@ -7,7 +7,7 @@ Features:
 - Converts everything to D2 units palette.
 - Compiles into a single animated .gif
 
-In Diablo 2, RGB(0, 0, 0) becomes transparent. To prevent this, this tool boosts the overall brightness slightly to ensure any pure blacks will become the closest thing to black in the D2 color palette that is not transparent, RGB(4, 4, 4). If you don't want this, run with `--noboost`
+In Diablo 2, RGB(0, 0, 0) becomes transparent. To prevent this, this tool boosts the overall brightness slightly to ensure any pure blacks will become the closest thing to black in the D2 color palette that is not transparent, RGB(4, 4, 4). If you don't want this, run with `--noboost`.
 
 ![d2gifcompile.py example](https://github.com/iuitdebos/blender-d2tools/blob/main/images/d2gifcompile_verbose.png)
 

@@ -94,7 +94,9 @@ if (args.verbose):
 # Compile into a single animated gif
 processed_images[0].save(rootname+'.gif',
     append_images = processed_images[1:],
-    disposal = 1, # No need to dispose because every image has black background
+    background = 0,
+    transparency = 255,
+    disposal = 2, # No need to dispose because every image has black background
     save_all = True, 
     optimize = False,
     palette = d2pal,
