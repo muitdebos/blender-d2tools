@@ -260,13 +260,17 @@ Now you should have a .COF file that is using your animations.
 
 ## Chapter 6: Reference
 
-### Units palette
+### Units palette files
 As I understand it, the "units" palette doesn't actually exist in the game, but it only has colors that are shared between acts. That is why this palette is recommended, and required for inventory graphics.
 
-[units.pal](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/units.pal)
-[units.act](https://github.com/iuitdebos/blender-d2tools/blob/main/docs/units.act)
+| Palette |    |    |    |    |    |
+|---------|:--:|:--:|:--:|:--:|:--:|
+| units  	| [.pal](https://github.com/iuitdebos/blender-d2tools/blob/main/palettes/units.pal) | [.act](https://github.com/iuitdebos/blender-d2tools/blob/main/palettes/units.act) | [.gif](https://github.com/iuitdebos/blender-d2tools/blob/main/palettes/units.gif) |	[_hex.txt](https://github.com/iuitdebos/blender-d2tools/blob/main/palettes/units_hex.txt) | [_rgb.txt](https://github.com/iuitdebos/blender-d2tools/blob/main/palettes/units_rgb.txt) |
+
+
 
 ### Isometric 3D Setup
+- RotateBox that parents Sun + Camera.
 - Sun (/ directional) light.
   - Position: (8.05, -11.788, 24)
   - Rotation: (0, 30.7, -55.7)
