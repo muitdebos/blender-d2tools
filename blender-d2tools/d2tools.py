@@ -466,10 +466,11 @@ class D2TOOLS_OT_render(bpy.types.Operator):
                 bpy.context.scene.frame_set( f ) # Set frame
                 
                 # Output definitions
+                dirNum = str( f ).zfill(2) # Zero-padds direction number (5 -> 05)
                 frameNum = str( f ).zfill(4) # Zero-padds frame number (5 -> 0005)
                 frameName = "{prefix}_{dir}_{f}{ext}".format(
                     prefix = fileName,
-                    dir = i,
+                    dir = dirNum,
                     f = frameNum,
                     ext = bpy.context.scene.render.file_extension,
                 )

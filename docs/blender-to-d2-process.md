@@ -126,7 +126,7 @@ Feel free to save this as a template project, copy it and here we can start our 
 ### Character creation
 
 Again, this is too much to cover in this document. But here are the steps:
-- Model your character in a neutral pose (relaxed T-pose for humanoids).
+- Model your character in a neutral pose (relaxed A-pose for humanoids).
 - Rig your character
 - UV unwrapping
 - Texturing
@@ -299,7 +299,7 @@ Rotate the rotatebox in the Z-axis
 - A2 – Attack 2
 - TH – Throw (Most monsters don’t have this)
 - KK – Kick (Most monsters don’t have this)
-- SQ – Special sequence (like the amazon’s dodge sequence, or the paladin’s smite)
+- SQ – Special sequence (like the Amazon’s dodge sequence, or the Paladin’s smite)
 - SC – Cast
 - S1 – Special 1
 - S2 – Special 2
@@ -324,11 +324,13 @@ These are for organizing different weapons used by the same creature, most monst
 - 2HS - 2-handed Strike
 - 1HT - 1-handed Thrust
 - 2HT - 2-handed Thrust
-- STF - (? Staff?)
-- 1JS - 1-handed jab-strike
-- 1JT - 1-handed jab-thrust
-- 1SS - (?)
-- 1ST - (?)
+- STF - Staff
+- 1JS - Left-Jab Right-Swing
+- 1JT - Left-Jab Right-Thrust
+- 1SS - Left-Swing Right-Swing
+- 1ST - Left-Swing Right-Thrust
+- HT1 - 1 Hand-to-hand (Claw)
+- HT2 - 2 Hand-to-hand (Dual claws)
 - BOW - Bow
 - XBW - Crossbow
  
