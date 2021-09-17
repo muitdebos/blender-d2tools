@@ -71,13 +71,13 @@ def fade_images(src_img, overlay_img, alpha):
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Glob string to search the files for. Defaults to './renders/*.png'")
 parser.add_argument("-o", "--output", dest = "output", help = "Name of resulting animated .gif. Defaults to first image like so: @1TRLITNUHTH_0_0001.png becomes @1TRLITNUHTH.gif.")
-parser.add_argument("-l", "--loop", dest = "loop", type = int, help="Amount of frames to loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
+parser.add_argument("--fade", dest = "fade", type = int, help="Amount of frames to fade in the loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
 parser.add_argument("-d", "--directions", dest = "directions", type = int, help="Amount of directions. Used for splitting the images into groups when looping.")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted.")
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
 parser.set_defaults(input = "./renders/*.png")
-parser.set_defaults(loop = 0)
+parser.set_defaults(fade = 0)
 parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
 args = parser.parse_args()
@@ -92,7 +92,7 @@ if (len(image_paths) <= 0):
     quit()
 
 # Separate by direction
-loop_amount = args.loop
+loop_amount = args.fade
 loop_max = math.floor(len(image_paths) / 2)
 if (loop_amount > loop_max):
     loop_amount = loop_max
@@ -115,7 +115,7 @@ if ((len(image_paths) / args.directions) % 1 != 0):
 if (args.verbose):
     print("| Settings |")
     print(f"Boost image brightness: {args.boost_brightness}")
-    print(f"Looping frames: {args.loop}")
+    print(f"Looping frames: {loop_amount}")
     print(f"Directions: {args.directions}")
     print(f"Frames / direction: {amount_per_dir}")
 
