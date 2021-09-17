@@ -293,8 +293,8 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         light = bpy.data.objects.new('MAIN_LIGHT', light_data)
         bpy.context.collection.objects.link(light)
         light.location = (0.1, -0.7, -0.3)
-        light.energy = 50
-        light.shadow_soft_size = 0.1
+        light.data.energy = 50
+        light.data.shadow_soft_size = 0.1
         
         # Parent camera and light to rotatebox
         cam.parent = rotatebox
