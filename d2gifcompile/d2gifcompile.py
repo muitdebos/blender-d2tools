@@ -92,21 +92,22 @@ if (len(image_paths) <= 0):
     quit()
 
 # Separate by direction
-loop_amount = args.fade
-loop_max = math.floor(len(image_paths) / 2)
-if (loop_amount > loop_max):
-    loop_amount = loop_max
-    print(f"Warning: Maximum amount of looping frames is half the total amount of frames. Clamped to {loop_max}")
-
-# Separate by direction
 if (args.directions <= 0):
     args.directions = 1
 if (args.directions > len(image_paths)):
-    args.directions = len(image_paths)
+    print("Error: You are asking for more directions than there are images.")
+    quit()
 
 amount_per_dir = len(image_paths) // args.directions
 imagepaths_by_dir = []
 processed_images = [] # List of final images
+
+# Separate by direction
+loop_amount = args.fade
+loop_max = math.floor(amount_per_dir / 2)
+if (loop_amount > loop_max):
+    loop_amount = loop_max
+    print(f"Warning: Maximum amount of looping frames is half the total amount of frames. Clamped to {loop_max}")
 
 if ((len(image_paths) / args.directions) % 1 != 0):
     print("Error: Directions do not have an equal amount of frames. All directions must have the same amount of frames.")
@@ -115,9 +116,10 @@ if ((len(image_paths) / args.directions) % 1 != 0):
 if (args.verbose):
     print("| Settings |")
     print(f"Boost image brightness: {args.boost_brightness}")
-    print(f"Looping frames: {loop_amount}")
+    print(f"Fade-in loop frames: {loop_amount}")
     print(f"Directions: {args.directions}")
     print(f"Frames / direction: {amount_per_dir}")
+    print(f"Total images found: {len(image_paths)}")
 
 d2pal = load_palette('./units_pylist.txt')
 
