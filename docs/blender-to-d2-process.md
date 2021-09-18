@@ -170,7 +170,7 @@ This example uses Photoshop CS 6, but the steps are not too complicated so if yo
 - Open the Timeline / animations panel (Window > Timeline)
 - In top right of panel, click on the extra options and select "Make Frames from Layers"
 - Most likely the frames will be in reverse order (last frame is first), check that and if necessary you can click "Reverse Frames" in the same menu.
-- Select all frames, right click on a frame and and instead of Automatic choose "Dispose". This is necessary because when Photoshop wants to render a .gif, normally it would be optimized saving only the changes between frames rather than the full image every single frame. We don't want this as Diablo does not handle this well and we neat the full image every frame.
+- Select all frames, right click on a frame and instead of Automatic choose "Dispose". This is necessary because when Photoshop wants to render a .gif, normally it would be optimized saving only the changes between frames rather than the full image every single frame. We don't want this as Diablo does not handle this well and we neat the full image every frame.
 - Final check, you can run the animation in Photoshop. Make sure it has all directions, in the correct order, and that no frames are missing.
 
 ### GIF Exporting
