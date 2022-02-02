@@ -137,7 +137,20 @@ class VIEW3D_PT_D2ToolsRenderProperties(bpy.types.Panel):
         
         if (context.scene.d2tools_types == "D2TILE"):
             row = layout.row()
-            row.label(text = "WIP. Render manually.")
+            row.prop(context.scene, "d2tools_tileRenderTypes", expand = True)
+            
+            if (context.scene.d2tools_tileRenderTypes == "D2TILE_WALL"):
+                row = layout.row()
+                row.prop(context.scene.render, "resolution_y")
+            
+            row = layout.row()
+            row.label(text = "Tiles to render")
+            row = layout.row()
+            row.prop(context.scene, "d2tools_tileMinX")
+            row.prop(context.scene, "d2tools_tileMinY")
+            row = layout.row()
+            row.prop(context.scene, "d2tools_tileMaxX")
+            row.prop(context.scene, "d2tools_tileMaxY")
             
             
         if (context.scene.d2tools_types == "D2ITEM"):
@@ -165,7 +178,7 @@ class VIEW3D_PT_D2ToolsRender(bpy.types.Panel):
             
         if (context.scene.d2tools_types == "D2TILE"):
             row = layout.row()
-            row.operator("render.render")
+            row.operator("d2tools.ops_render_tiles")
             
         if (context.scene.d2tools_types == "D2ITEM"):
             row = layout.row()
@@ -232,17 +245,27 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         rotatebox.empty_display_size = 0.5
         rotatebox.empty_display_type = 'PLAIN_AXES'
         
+        # Rotatebox collection
+        rotatebox_coll = bpy.data.collections.new("Rotatebox")
+        rotatebox_coll.hide_select = True
+        bpy.context.scene.collection.children.link(rotatebox_coll)
+        rotatebox_coll.objects.link(rotatebox)
+        bpy.context.scene.collection.objects.unlink(rotatebox)
+        original_collection = bpy.context.view_layer.active_layer_collection
+        layer_collection = bpy.context.view_layer.layer_collection.children[rotatebox_coll.name]
+        bpy.context.view_layer.active_layer_collection = layer_collection
+        
         # Generate floor tile camera
         fs_cam_data = bpy.data.cameras.new('camera')
         fs_cam = bpy.data.objects.new('FS_CAMERA', fs_cam_data)
         bpy.context.collection.objects.link(fs_cam)
         bpy.context.scene.camera = fs_cam
-        fs_cam.location = (0, -34.66, 20)
+        fs_cam.location = (15, -15, 12.24)
         fs_cam.rotation_euler[0] = math.radians(60)
         fs_cam.rotation_euler[1] = math.radians(0)
-        fs_cam.rotation_euler[2] = math.radians(0)
+        fs_cam.rotation_euler[2] = math.radians(45)
         fs_cam.data.type = 'ORTHO'
-        fs_cam.data.ortho_scale = 2.8
+        fs_cam.data.ortho_scale = 2.83
         
         # Generate light source
         light_data = bpy.data.lights.new('light', type='SUN')
@@ -252,18 +275,50 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         light.rotation_euler[0] = math.radians(0)
         light.rotation_euler[1] = math.radians(30.7)
         light.rotation_euler[2] = math.radians(-55.7)
-        
-        # Parent camera and light to rotatebox, then rotate box to direction 0
-        fs_cam.parent = rotatebox
         light.parent = rotatebox
+        
+        # Parent camera to rotatebox with proper rotations
         rotatebox.rotation_euler[0] = math.radians(0)
         rotatebox.rotation_euler[1] = math.radians(0)
         rotatebox.rotation_euler[2] = math.radians(45)
+        bpy.context.evaluated_depsgraph_get().update()
+        fs_cam.parent = rotatebox
+        fs_cam.matrix_parent_inverse = rotatebox.matrix_world.inverted()
+        
+        # Generate holdouts (prevents rendering outside the tile)
+        holdout_coll = bpy.data.collections.new("Holdout")
+        holdout_coll.hide_select = True
+        rotatebox_coll.children.link(holdout_coll)
+        layer_collection = bpy.context.view_layer.active_layer_collection.children[holdout_coll.name]
+        bpy.context.view_layer.active_layer_collection = layer_collection
+        layer_collection.holdout = True
+        
+        def new_holdout_tile(name, location):
+            # Holdout frame tile
+            bpy.ops.mesh.primitive_plane_add(
+                size = 2,
+                enter_editmode = False,
+                align = 'WORLD',
+            )
+            holdout_tile = bpy.context.active_object
+            holdout_tile.location = location
+            holdout_tile.name = name
+            holdout_tile.hide_select = True
+            holdout_tile.hide_set(True)
+            holdout_tile.parent = rotatebox
+            holdout_tile.matrix_parent_inverse = rotatebox.matrix_world.inverted()
+            
+        new_holdout_tile("Holdout_TL", (10.247, -12.247, 10))
+        new_holdout_tile("Holdout_TR", (12.247, -10.247, 10))
+        new_holdout_tile("Holdout_BL", (12.247, -14.247, 10))
+        new_holdout_tile("Holdout_BR", (14.247, -12.247, 10))
         
         # Don't allow user to meddle with settings by default
         fs_cam.hide_select = True
         light.hide_select = True
         rotatebox.hide_select = True
+        
+        bpy.context.view_layer.active_layer_collection = original_collection
         
         return True
     
@@ -352,7 +407,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         
         # Floor tile
         bpy.ops.mesh.primitive_plane_add(
-            size = 1.98,
+            size = 2,
             enter_editmode = False,
             align = 'WORLD',
         )
@@ -414,7 +469,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         bpy.context.scene.cycles.use_denoising = True
         
         # Disable anti-alias
-        bpy.context.scene.cycles.pixel_filter_type = 'GAUSSIAN'
+        bpy.context.scene.cycles.pixel_filter_type = 'BOX'
         bpy.context.scene.cycles.filter_width = 0.01
         
         # Black background
@@ -486,7 +541,8 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
                 self.scene_setup_item(context)
         
         # Deselect anything
-        bpy.context.active_object.select_set(False)
+        if (bpy.context.active_object):
+            bpy.context.active_object.select_set(False)
         
         return {'FINISHED'}
 
@@ -506,7 +562,7 @@ class D2TOOLS_OT_render(bpy.types.Operator):
             context.scene.d2tools_endDirection = startDirection
             endDirection = startDirection
 
-        # This object should contain your camera and your point light
+        # This object should contain your camera and your directional light
         rotatebox = bpy.data.objects["ROTATEBOX"]
         startFrame = bpy.context.scene.frame_start
         endFrame = bpy.context.scene.frame_end
@@ -546,6 +602,58 @@ class D2TOOLS_OT_render(bpy.types.Operator):
         rotatebox.rotation_euler[1] = math.radians( d2_directions[0][1] )
         rotatebox.rotation_euler[2] = math.radians( d2_directions[0][2] )
             
+        print('Finished rendering')
+        
+        return {'FINISHED'}
+
+
+class D2TOOLS_OT_render_tiles(bpy.types.Operator):
+    bl_label = "Render tiles"
+    bl_idname = "d2tools.ops_render_tiles"
+    bl_description = "Renders out the selected tile using Blender's render settings"
+    
+    def execute(self, context):
+        outputDir = context.scene.d2tools_outputDir
+        fileName = context.scene.d2tools_fileName
+        minX = context.scene.d2tools_tileMinX
+        minY = context.scene.d2tools_tileMinY
+        maxX = context.scene.d2tools_tileMaxX
+        maxY = context.scene.d2tools_tileMaxY
+
+        if (maxX < minX):
+            context.scene.d2tools_tileMaxX = minX
+            maxX = minX
+        if (maxY < minY):
+            context.scene.d2tools_tileMaxY = minY
+            maxY = minY
+
+        # This object should contain your camera and your directional light
+        rotatebox = bpy.data.objects["ROTATEBOX"]
+        
+        # If transparent, set ambient light. Otherwise set opaque background
+        if (bpy.context.scene.render.film_transparent):
+            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2_ambient
+        else:
+            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2_background
+        
+        # Render the frames for each direction
+        for x in range(minX, maxX + 1):
+            for y in range(minY, maxY + 1):
+                # Move rotatebox to target tile
+                rotatebox.location = (-2*x, 2*y, 0)
+                
+                # Output definitions
+                xNum = str( x ).zfill(2) # Zero-padds x number (5 -> 05)
+                yNum = str( y ).zfill(2) # Zero-padds y number (5 -> 05)
+                frameName = f"{fileName}_{xNum}_{yNum}{bpy.context.scene.render.file_extension}"
+                bpy.context.scene.render.filepath = join( outputDir, frameName )
+
+                # Render frame
+                bpy.ops.render.render(write_still = True)
+        
+        # Reset rotatebox to root
+        rotatebox.location = (0, 0, 0)
+        
         print('Finished rendering')
         
         return {'FINISHED'}
@@ -650,6 +758,44 @@ d2tools_endDirection = bpy.props.IntProperty(
     max = 31,
 )
 
+d2tools_tileRenderTypes = bpy.props.EnumProperty(
+    name = 'Render type',
+    description = 'The type of content to render',
+    items = [
+        ('D2TILE_FLOOR', 'Floor', 'Flat floor or roof tiles. Always 160x80 pixels.'),
+        ('D2TILE_WALL', 'Wall', 'Wall tiles. Always 160 pixels wide, variable height.'),
+    ],
+    default = 'D2TILE_FLOOR',
+)
+
+d2tools_tileMinX = bpy.props.IntProperty(
+    name = 'Min X',
+    description = 'Start rendering from this tile X.',
+    default = 0,
+    min = 0,
+)
+
+d2tools_tileMinY = bpy.props.IntProperty(
+    name = 'Min Y',
+    description = 'Start rendering from this tile Y.',
+    default = 0,
+    min = 0,
+)
+
+d2tools_tileMaxX = bpy.props.IntProperty(
+    name = 'Max X',
+    description = 'Render tiles until this tile X.',
+    default = 0,
+    min = 0,
+)
+
+d2tools_tileMaxY = bpy.props.IntProperty(
+    name = 'Max Y',
+    description = 'Render tiles until this tile Y.',
+    default = 0,
+    min = 0,
+)
+
 registerClasses = [
     VIEW3D_PT_D2ToolsPanel,
     VIEW3D_PT_D2ToolsGenerate,
@@ -657,6 +803,7 @@ registerClasses = [
     VIEW3D_PT_D2ToolsRender,
     D2TOOLS_OT_generate,
     D2TOOLS_OT_render,
+    D2TOOLS_OT_render_tiles,
     D2TOOLS_OT_set_inv_render,
 ]
 
@@ -670,6 +817,11 @@ def register():
     bpy.types.Scene.d2tools_frameSkip = d2tools_frameSkip
     bpy.types.Scene.d2tools_startDirection = d2tools_startDirection
     bpy.types.Scene.d2tools_endDirection = d2tools_endDirection
+    bpy.types.Scene.d2tools_tileRenderTypes = d2tools_tileRenderTypes
+    bpy.types.Scene.d2tools_tileMinX = d2tools_tileMinX
+    bpy.types.Scene.d2tools_tileMinY = d2tools_tileMinY
+    bpy.types.Scene.d2tools_tileMaxX = d2tools_tileMaxX
+    bpy.types.Scene.d2tools_tileMaxY = d2tools_tileMaxY
     
     for c in registerClasses:
         bpy.utils.register_class(c)
@@ -684,6 +836,11 @@ def unregister():
     del bpy.types.Scene.d2tools_frameSkip
     del bpy.types.Scene.d2tools_startDirection
     del bpy.types.Scene.d2tools_endDirection
+    del bpy.types.Scene.d2tools_tileRenderTypes
+    del bpy.types.Scene.d2tools_tileMinX
+    del bpy.types.Scene.d2tools_tileMinY
+    del bpy.types.Scene.d2tools_tileMaxX
+    del bpy.types.Scene.d2tools_tileMaxY
     
     for c in registerClasses:
         bpy.utils.unregister_class(c)
