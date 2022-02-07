@@ -57,9 +57,62 @@ d2_ambient = (0.0212, 0.0212, 0.0212, 1)
 # Background for opaque renders
 d2_background = (0, 0, 0, 1)
 
+# Entity vars
+d2_ent_orthoscale = 7
+
+# Environment vars
+d2_env_tile_x = 160
+d2_env_tile_y = 80
+d2_env_orthoscale = 2.83
+d2_env_cam_root = (15, -15, 12.24)
+
 # Inventory tile size in pixels
 d2_inv_tilesize = 28
 
+
+#############
+## HELPERS ##
+#############
+def get_env_camera_vars(scene):
+    scale_x = 1
+    scale_y = scene.d2tools_wallTileHeight
+    ratio_ortho = max(abs(scale_y / scale_x), 1) - 1
+    ratio_res = max(abs(scale_y / scale_x), 0)
+    
+    target_res_x = round(d2_env_tile_x)
+    target_res_y = round(d2_env_tile_y * (ratio_res + 1))
+    target_ortho = d2_env_orthoscale + (ratio_ortho * d2_env_orthoscale / 2)
+    target_x_tile_offset = -1 * ratio_res
+    target_y_tile_offset = ratio_res
+    
+    return (
+        target_res_x,
+        target_res_y,
+        target_ortho,
+        target_x_tile_offset,
+        target_y_tile_offset,
+    )
+
+def onUpdate_wallTileHeight(self, context):
+    active_cam = self.camera
+    if (active_cam):
+        cam_vars = get_env_camera_vars(self)
+        
+        self.render.resolution_x = cam_vars[0]
+        self.render.resolution_y = cam_vars[1]
+        active_cam.data.ortho_scale = cam_vars[2]
+        
+        x = d2_env_cam_root[0] + cam_vars[3]
+        y = d2_env_cam_root[1] + cam_vars[4]
+        z = d2_env_cam_root[2]
+        active_cam.location = (x, y, z)
+
+def onUpdate_tileRenderTypes(self, context):
+    new_state = self.d2tools_tileRenderTypes
+    if (new_state == "D2TILE_FLOOR"):
+        self.d2tools_wallTileHeight = 0
+    elif (new_state == "D2TILE_WALL"):
+        self.d2tools_wallTileHeight = 1
 
 ##########
 ##  UI  ##
@@ -141,7 +194,7 @@ class VIEW3D_PT_D2ToolsRenderProperties(bpy.types.Panel):
             
             if (context.scene.d2tools_tileRenderTypes == "D2TILE_WALL"):
                 row = layout.row()
-                row.prop(context.scene.render, "resolution_y")
+                row.prop(context.scene, "d2tools_wallTileHeight")
             
             row = layout.row()
             row.label(text = "Tiles to render")
@@ -212,7 +265,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         cam.rotation_euler[1] = math.radians(0)
         cam.rotation_euler[2] = math.radians(0)
         cam.data.type = 'ORTHO'
-        cam.data.ortho_scale = 7
+        cam.data.ortho_scale = d2_ent_orthoscale
         
         # Generate light source
         light_data = bpy.data.lights.new('light', type='SUN')
@@ -260,12 +313,12 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         fs_cam = bpy.data.objects.new('FS_CAMERA', fs_cam_data)
         bpy.context.collection.objects.link(fs_cam)
         bpy.context.scene.camera = fs_cam
-        fs_cam.location = (15, -15, 12.24)
+        fs_cam.location = d2_env_cam_root
         fs_cam.rotation_euler[0] = math.radians(60)
         fs_cam.rotation_euler[1] = math.radians(0)
         fs_cam.rotation_euler[2] = math.radians(45)
         fs_cam.data.type = 'ORTHO'
-        fs_cam.data.ortho_scale = 2.83
+        fs_cam.data.ortho_scale = d2_env_orthoscale
         
         # Generate light source
         light_data = bpy.data.lights.new('light', type='SUN')
@@ -305,7 +358,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
             holdout_tile.name = name
             holdout_tile.hide_select = True
             holdout_tile.hide_set(True)
-            holdout_tile.parent = rotatebox
+            holdout_tile.parent = fs_cam
             holdout_tile.matrix_parent_inverse = rotatebox.matrix_world.inverted()
             
         new_holdout_tile("Holdout_TL", (10.247, -12.247, 10))
@@ -687,7 +740,7 @@ class D2TOOLS_OT_set_inv_render(bpy.types.Operator):
         
         return {'FINISHED'}
     
-    
+
 ################
 ##  REGISTER  ##
 ################
@@ -766,6 +819,15 @@ d2tools_tileRenderTypes = bpy.props.EnumProperty(
         ('D2TILE_WALL', 'Wall', 'Wall tiles. Always 160 pixels wide, variable height.'),
     ],
     default = 'D2TILE_FLOOR',
+    update = onUpdate_tileRenderTypes
+)
+
+d2tools_wallTileHeight = bpy.props.IntProperty(
+    name = 'Wall height',
+    description = 'Height of walls in tiles (0 is 160x80, 1 is 160x160 etc.)',
+    default = 0,
+    min = 0,
+    update = onUpdate_wallTileHeight
 )
 
 d2tools_tileMinX = bpy.props.IntProperty(
@@ -818,6 +880,7 @@ def register():
     bpy.types.Scene.d2tools_startDirection = d2tools_startDirection
     bpy.types.Scene.d2tools_endDirection = d2tools_endDirection
     bpy.types.Scene.d2tools_tileRenderTypes = d2tools_tileRenderTypes
+    bpy.types.Scene.d2tools_wallTileHeight = d2tools_wallTileHeight
     bpy.types.Scene.d2tools_tileMinX = d2tools_tileMinX
     bpy.types.Scene.d2tools_tileMinY = d2tools_tileMinY
     bpy.types.Scene.d2tools_tileMaxX = d2tools_tileMaxX
@@ -837,6 +900,7 @@ def unregister():
     del bpy.types.Scene.d2tools_startDirection
     del bpy.types.Scene.d2tools_endDirection
     del bpy.types.Scene.d2tools_tileRenderTypes
+    del bpy.types.Scene.d2tools_wallTileHeight
     del bpy.types.Scene.d2tools_tileMinX
     del bpy.types.Scene.d2tools_tileMinY
     del bpy.types.Scene.d2tools_tileMaxX
