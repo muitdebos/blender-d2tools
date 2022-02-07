@@ -12,13 +12,17 @@ from PIL import Image
 d2darkest = 4 # RGB: 4 / 256 is the darkest non-transparent black in d2 color palette
 def boost_brightness(img: Image.Image):
     # Get a mask from alpha channel (anything with any transparency get's cut off)
-    img_A = img.getchannel("A")
-    mask = img_A.point(lambda i: i > 254 and 255)
+    has_A = "A" in img.getbands()
+    if (has_A):
+        img_A = img.getchannel("A")
+        mask = img_A.point(lambda i: i > 254 and 255)
 
     # Boost brightness fractionally to bump 0 to 4 (and 256 to 256)
     brighter = img.point(lambda i: round(((i + d2darkest) / (255 + d2darkest)) * 255))
+
     # Use the mask to only apply to the content
-    img.paste(brighter, None, mask)
+    if (has_A):
+        img.paste(brighter, None, mask)
     
     return img
 
@@ -85,11 +89,18 @@ args = parser.parse_args()
 can_boost_brightness = args.boost_brightness
 
 image_paths = sorted(glob.glob(args.input))
-rootname = args.output if args.output else os.path.basename(image_paths[0]).split('_')[0]
-
 if (len(image_paths) <= 0):
-    print("Error: Did not find any images. Please check your -input arg.\nNote that you may need to escape special characters (e.g. ./$1TRLITNUHTH_*.png should become ./\$1TRLITNUHTH_*.png).")
+    print("Error: Did not find any images. Please check your --input arg. By default, it's \"./renders/*.png\".\nNote that you may need to escape special characters (e.g. ./$1TRLITNUHTH_*.png should become ./\$1TRLITNUHTH_*.png).")
     quit()
+
+
+rootname = args.output
+if (args.output == None):
+    split_path = os.path.basename(image_paths[0]).split('_')
+    if (len(split_path) > 0):
+        rootname = split_path[0]
+    else:
+        rootname = "results"
 
 # Separate by direction
 if (args.directions <= 0):
@@ -162,13 +173,19 @@ for d in range(args.directions):
 
     # Process images
     for img in images_in_dir:
+        filename = img.filename
+
         if (args.verbose):
-            print(f"{img.filename}: [Processing] ...", end = " ")
+            print(f"{filename}: [Processing] ...", end = " ")
+
+        if (img.mode == "P"):
+            img = img.convert("RGB")
+
+        print(filename)
 
         # Check to ensure we can and should boost blacks
         if (img.mode == "RGB" and can_boost_brightness):
-            print(f"\nWarning: {img.filename} does not have an alpha channel. Cannot boost blacks.")
-            can_boost_brightness = False
+            print(f"\nWarning: {filename} does not have an alpha channel. Boosting blacks might not work as expected.")
         
         # If we can, boost blacks to the darkest non-transparent black in d2 color palette
         if (can_boost_brightness):
