@@ -711,7 +711,7 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
 class D2TOOLS_OT_set_inv_render(bpy.types.Operator):
     bl_label = "Set inventory space"
     bl_idname = "d2tools.ops_set_inv_render"
-    bl_description = "Sets the render output to be one of the inventory space arangements"
+    bl_description = "Sets the render output to be one of the inventory space arrangements"
     bl_options = {'REGISTER', 'UNDO'}
     
     horizontal_tiles: bpy.props.IntProperty(
