@@ -67,7 +67,6 @@ def fade_images(src_img, overlay_img, alpha):
 
     return img
 
-
 ########
 # Main #
 ########
@@ -75,6 +74,7 @@ def fade_images(src_img, overlay_img, alpha):
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Glob string to search the files for. Defaults to './renders/*.png'")
 parser.add_argument("-o", "--output", dest = "output", help = "Name of resulting animated .gif. Defaults to first image like so: @1TRLITNUHTH_0_0001.png becomes @1TRLITNUHTH.gif.")
+parser.add_argument("-s", "--scale", dest = "scale", help = "Scale images by amount (default 1)")
 parser.add_argument("--fade", dest = "fade", type = int, help="Amount of frames to fade in the loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
 parser.add_argument("-d", "--directions", dest = "directions", type = int, help="Amount of directions. Used for splitting the images into groups when looping.")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
@@ -82,6 +82,7 @@ parser.add_argument("--boost", dest = "boost_brightness", action='store_true', h
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
 parser.set_defaults(input = "./renders/*.png")
 parser.set_defaults(fade = 0)
+parser.set_defaults(scale = 1)
 parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
 args = parser.parse_args()
@@ -199,7 +200,7 @@ for d in range(args.directions):
             print(f"[Converting to D2 palette] ...", end = " ")
         img = img.convert("RGB")
         img = img.quantize(palette=d2pal)
-        
+
         processed_images.append(img)
 
         if (args.verbose):

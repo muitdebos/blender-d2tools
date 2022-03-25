@@ -302,7 +302,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         rotatebox_coll.hide_select = True
         bpy.context.scene.collection.children.link(rotatebox_coll)
         rotatebox_coll.objects.link(rotatebox)
-        bpy.context.scene.collection.objects.unlink(rotatebox)
+        bpy.context.collection.objects.unlink(rotatebox)
         original_collection = bpy.context.view_layer.active_layer_collection
         layer_collection = bpy.context.view_layer.layer_collection.children[rotatebox_coll.name]
         bpy.context.view_layer.active_layer_collection = layer_collection
@@ -675,6 +675,13 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
         if (max_y < min_y):
             context.scene.d2tools_env_max_y = min_y
             max_y = min_y
+            
+        if (bpy.context.view_layer.layer_collection.children['Rotatebox']):
+            if (bpy.context.scene.d2tools_env_render_types == 'D2ENV_WALL'):
+                bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].holdout = False
+            else:
+                bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].holdout = True
+            
 
         # This object should contain your camera and your directional light
         rotatebox = bpy.data.objects["ROTATEBOX"]
