@@ -15,6 +15,8 @@ To get right into it, the shape of the world map where levels can sit in is a pe
 
 The reason is that the game maps a level's tiles' 2D position with some math onto a single integer (up to 0xFFFF or 8191). One could use the first two bytes as the X and the second to as Y, which would give you a square 0xFF / 4096 per axis. However, the Blizzard North developers were smart and could squeeze out those extra triangles you see in the image above past 4096.
 
+Also note that Diablo 2 has quite some random map generation including connected outdoor areas. Any area below 1000 on either axis is reserved for these random maps.
+
 
 ### The math
 
