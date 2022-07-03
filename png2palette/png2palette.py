@@ -12,10 +12,10 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Name of input file. Defaults to './palette.png'")
-parser.add_argument("-o", "--output", dest = "output", help = "Name of output text file. Defaults to './palette.txt'")
+parser.add_argument("-o", "--output", dest = "output", help = "Name of output text file. Defaults to './palette'")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.set_defaults(input = "./palette.png")
-parser.set_defaults(output = "palette.txt")
+parser.set_defaults(output = "palette")
 args = parser.parse_args()
 
 image_paths = glob.glob(args.input)

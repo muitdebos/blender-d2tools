@@ -11,7 +11,7 @@ parser.add_argument("-i", "--input", dest = "input", help = "Name of input file.
 parser.add_argument("-o", "--output", dest = "output", help = "Name of output text file. Defaults to './palette.png'")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.set_defaults(input = "./palette.txt")
-parser.set_defaults(output = "palette.png")
+parser.set_defaults(output = "palette")
 args = parser.parse_args()
 
 input_paths = glob.glob(args.input)
