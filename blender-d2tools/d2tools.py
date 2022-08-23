@@ -63,7 +63,7 @@ d2tools_ent_orthoscale = 7
 # Environment vars
 d2tools_env_tile_x = 160
 d2tools_env_tile_y = 80
-d2tools_env_orthoscale = 2.83
+d2tools_env_orthoscale = 2.790
 d2tools_env_cam_root = (15, -15, 12.24)
 
 # Inventory tile size in pixels
@@ -323,6 +323,8 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         light_data = bpy.data.lights.new('light', type='SUN')
         light = bpy.data.objects.new('LIGHT', light_data)
         bpy.context.collection.objects.link(light)
+        light.data.energy = 1
+        light.data.cycles.max_bounces = 512
         light.location = (8.05, -11.788, 24)
         light.rotation_euler[0] = math.radians(0)
         light.rotation_euler[1] = math.radians(30.7)
@@ -358,7 +360,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
             holdout_tile.hide_select = True
             holdout_tile.hide_set(True)
             holdout_tile.parent = fs_cam
-            holdout_tile.matrix_parent_inverse = rotatebox.matrix_world.inverted()
+            holdout_tile.matrix_parent_inverse = fs_cam.matrix_world.inverted()
             
         new_holdout_tile("Holdout_TL", (10.247, -12.247, 10))
         new_holdout_tile("Holdout_TR", (12.247, -10.247, 10))
@@ -516,7 +518,7 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         bpy.context.scene.cycles.use_denoising = True
         
         # Disable anti-alias
-        bpy.context.scene.cycles.pixel_filter_type = 'BOX'
+        bpy.context.scene.cycles.pixel_filter_type = 'GAUSSIAN'
         bpy.context.scene.cycles.filter_width = 0.01
         
         # Black background
@@ -679,8 +681,10 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
         if (bpy.context.view_layer.layer_collection.children['Rotatebox']):
             if (bpy.context.scene.d2tools_env_render_types == 'D2ENV_WALL'):
                 bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].holdout = False
+                bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].collection.hide_render = True
             else:
                 bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].holdout = True
+                bpy.context.view_layer.layer_collection.children['Rotatebox'].children['Holdout'].collection.hide_render = False
             
 
         # This object should contain your camera and your directional light
@@ -693,19 +697,47 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
         
         # Render the frames for each direction
-        for x in range(min_x, max_x + 1):
-            for y in range(min_y, max_y + 1):
+        
+        if (bpy.context.scene.d2tools_env_render_types == 'D2ENV_WALL'):
+            for x in range(min_x, max_x + 1):
                 # Move rotatebox to target tile
-                rotatebox.location = (-2*x, 2*y, 0)
+                rotatebox.location = (-2*x, 2*min_y, 0)
                 
                 # Output definitions
                 x_num = str( x ).zfill(2) # Zero-padds x number (5 -> 05)
+                y_num = str( min_y ).zfill(2) # Zero-padds y number (5 -> 05)
+                frame_name = f"{filename}_{x_num}_{y_num}{bpy.context.scene.render.file_extension}"
+                bpy.context.scene.render.filepath = join( output_dir, frame_name )
+
+                # Render frame
+                bpy.ops.render.render(write_still = True)
+            for y in range(min_y, max_y + 1):
+                # Move rotatebox to target tile
+                rotatebox.location = (-2*min_x, 2*y, 0)
+                
+                # Output definitions
+                x_num = str( min_x ).zfill(2) # Zero-padds x number (5 -> 05)
                 y_num = str( y ).zfill(2) # Zero-padds y number (5 -> 05)
                 frame_name = f"{filename}_{x_num}_{y_num}{bpy.context.scene.render.file_extension}"
                 bpy.context.scene.render.filepath = join( output_dir, frame_name )
 
                 # Render frame
                 bpy.ops.render.render(write_still = True)
+        else:
+            for x in range(min_x, max_x + 1):
+                for y in range(min_y, max_y + 1):
+                    # Move rotatebox to target tile
+                    rotatebox.location = (-2*x, 2*y, 0)
+                    
+                    # Output definitions
+                    x_num = str( x ).zfill(2) # Zero-padds x number (5 -> 05)
+                    y_num = str( y ).zfill(2) # Zero-padds y number (5 -> 05)
+                    frame_name = f"{filename}_{x_num}_{y_num}{bpy.context.scene.render.file_extension}"
+                    bpy.context.scene.render.filepath = join( output_dir, frame_name )
+
+                    # Render frame
+                    bpy.ops.render.render(write_still = True)
+                    
         
         # Reset rotatebox to root
         rotatebox.location = (0, 0, 0)
@@ -910,6 +942,13 @@ def unregister():
     
     for c in registerClasses:
         bpy.utils.unregister_class(c)
+        
+def square(val):
+   """Returns the square of the given value"""
+   return val * val
+
+# Add function to driver_namespace.
+bpy.app.driver_namespace['square'] = square
    
 if __name__ == "__main__":
     register()
