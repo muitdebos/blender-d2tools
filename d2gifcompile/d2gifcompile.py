@@ -9,7 +9,7 @@ from PIL import Image
 ########
 
 ## Brightness boost to ensure no content becomes transparent in D2
-d2darkest = 4 # RGB: 4 / 256 is the darkest non-transparent black in d2 color palette
+d2darkest = 5 # RGB: 4 / 256 is the darkest non-transparent black in d2 color palette
 def boost_brightness(img: Image.Image):
     # Get a mask from alpha channel (anything with any transparency get's cut off)
     has_A = "A" in img.getbands()
@@ -19,12 +19,15 @@ def boost_brightness(img: Image.Image):
 
     # Boost brightness fractionally to bump 0 to 4 (and 256 to 256)
     brighter = img.point(lambda i: round(((i + d2darkest) / (255 + d2darkest)) * 255))
+    black = img.point(lambda i: 0)
 
     # Use the mask to only apply to the content
     if (has_A):
-        img.paste(brighter, None, mask)
+        black.paste(brighter, None, mask)
+        #img.paste(brighter, None)
+        #img.paste(brighter, None, mask)
     
-    return img
+    return black
 
 # Load images into Pillow Image
 def load_images(paths):
