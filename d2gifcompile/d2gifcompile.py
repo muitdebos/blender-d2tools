@@ -138,6 +138,8 @@ if (args.verbose):
 
 d2pal = load_palette('./units_pylist.txt')
 
+total_frames = 0
+
 ## Per direction, loop images if necessary, then process them and add them to the global processed_images list
 for d in range(args.directions):
     if (args.verbose):
@@ -202,9 +204,10 @@ for d in range(args.directions):
         if (args.verbose):
             print(f"[Converting to D2 palette] ...", end = " ")
         img = img.convert("RGB")
-        img = img.quantize(palette=d2pal)
+        img = img.quantize(palette=d2pal,dither=Image.NONE)
 
         processed_images.append(img)
+        total_frames += 1
 
         if (args.verbose):
             print(f"[Done]")
@@ -212,7 +215,7 @@ for d in range(args.directions):
 
 # Done processing
 if (args.verbose):
-    print(f"\nAll images processed, saving as '{rootname}.gif'")
+    print(f"\nAll images processed, saving as '{rootname}.gif'. Frames: {total_frames}")
 
 # Compile into a single animated gif
 processed_images[0].save(rootname+'.gif',
@@ -232,4 +235,4 @@ for image in processed_images:
 if (args.verbose):
     print(f"DONE")
 else:
-    print(f"Saved as '{rootname}.gif'")
+    print(f"Saved as '{rootname}.gif'. Frames: {total_frames}")
