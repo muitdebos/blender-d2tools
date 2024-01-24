@@ -518,8 +518,9 @@ class D2TOOLS_OT_generate(bpy.types.Operator):
         bpy.context.scene.cycles.use_denoising = True
         
         # Disable anti-alias
-        bpy.context.scene.cycles.pixel_filter_type = 'GAUSSIAN'
-        bpy.context.scene.cycles.filter_width = 0.01
+        bpy.context.scene.cycles.pixel_filter_type = 'BOX'
+        # bpy.context.scene.cycles.pixel_filter_type = 'GAUSSIAN'
+        # bpy.context.scene.cycles.filter_width = 0.01
         
         # Black background
         bpy.context.scene.render.film_transparent = True
