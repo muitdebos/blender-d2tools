@@ -206,6 +206,12 @@ class VIEW3D_PT_D2ToolsRenderProperties(bpy.types.Panel):
             row.prop(context.scene, "d2tools_env_max_X")
             row.prop(context.scene, "d2tools_env_max_y")
             
+            if (context.scene.d2tools_env_render_types == "D2ENV_FLOOR"):
+                row = layout.row()
+                row.prop(context.scene, "frame_start", text = "Frame start")
+                row = layout.row()
+                row.prop(context.scene, "frame_end", text = "Frame end")
+            
             
         if (context.scene.d2tools_types == "D2INV"):
             row = layout.row()
@@ -671,6 +677,8 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
         min_y = context.scene.d2tools_env_min_y
         max_x = context.scene.d2tools_env_max_X
         max_y = context.scene.d2tools_env_max_y
+        start_frame = bpy.context.scene.frame_start
+        end_frame = bpy.context.scene.frame_end
 
         if (max_x < min_x):
             context.scene.d2tools_env_max_X = min_x
@@ -697,9 +705,8 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
         else:
             bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
         
-        # Render the frames for each direction
-        
         if (bpy.context.scene.d2tools_env_render_types == 'D2ENV_WALL'):
+            # Render only xmin to xmax with y = 0, and then ymin to ymax with x = 0
             for x in range(min_x, max_x + 1):
                 # Move rotatebox to target tile
                 rotatebox.location = (-2*x, 2*min_y, 0)
@@ -712,6 +719,7 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
 
                 # Render frame
                 bpy.ops.render.render(write_still = True)
+                
             for y in range(min_y, max_y + 1):
                 # Move rotatebox to target tile
                 rotatebox.location = (-2*min_x, 2*y, 0)
@@ -725,6 +733,7 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
                 # Render frame
                 bpy.ops.render.render(write_still = True)
         else:
+            # Render every X,Y combination as a tile
             for x in range(min_x, max_x + 1):
                 for y in range(min_y, max_y + 1):
                     # Move rotatebox to target tile
@@ -735,9 +744,19 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
                     y_num = str( y ).zfill(2) # Zero-padds y number (5 -> 05)
                     frame_name = f"{filename}_{x_num}_{y_num}{bpy.context.scene.render.file_extension}"
                     bpy.context.scene.render.filepath = join( output_dir, frame_name )
+                    
+                    # Render animation
+                    for f in range(start_frame, end_frame):
+                        target_frame = f
+                        bpy.context.scene.frame_set( target_frame ) # Set frame
+                        
+                        # Output definitions
+                        frame_num = str( target_frame ).zfill(4) # Zero-padds frame number (5 -> 0005)
+                        frame_name = f"{filename}_{x_num}_{y_num}_{frame_num}{bpy.context.scene.render.file_extension}"
+                        bpy.context.scene.render.filepath = join( output_dir, frame_name )
 
-                    # Render frame
-                    bpy.ops.render.render(write_still = True)
+                        # Render frame
+                        bpy.ops.render.render(write_still = True)
                     
         
         # Reset rotatebox to root
