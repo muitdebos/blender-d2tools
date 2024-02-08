@@ -15,7 +15,7 @@ def boost_brightness(img: Image.Image):
     has_A = "A" in img.getbands()
     if (has_A):
         img_A = img.getchannel("A")
-        mask = img_A.point(lambda i: i > 254 and 255)
+        mask = img_A.point(lambda i: i > 127 and 255)
 
     # Boost brightness fractionally to bump 0 to 4 (and 256 to 256)
     brighter = img.point(lambda i: round(((i + d2darkest) / (255 + d2darkest)) * 255))
@@ -42,7 +42,7 @@ def load_images(paths):
 def load_palette(path: str):
     # Load palette data
     if (not os.path.isfile(path)):
-        print(f"Could not locate pallete file from '{path}'")
+        print(f"Could not locate palette file from '{path}'")
         quit()
 
     pal_data = []
@@ -78,12 +78,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Glob string to search the files for. Defaults to './renders/*.png'")
 parser.add_argument("-o", "--output", dest = "output", help = "Name of resulting animated .gif. Defaults to first image like so: @1TRLITNUHTH_0_0001.png becomes @1TRLITNUHTH.gif.")
 parser.add_argument("-s", "--scale", dest = "scale", help = "Scale images by amount (default 1)")
+parser.add_argument("-p", "--palette", dest = "palette", help = "Palette file to use. Default is './units_pylist.txt'. Needs to be a txt file where every line is one color value (e.g. RR\\nGG\\nBB\\nRR\\nGG\\BB\\..etc)")
 parser.add_argument("--fade", dest = "fade", type = int, help="Amount of frames to fade in the loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
 parser.add_argument("-d", "--directions", dest = "directions", type = int, help="Amount of directions. Used for splitting the images into groups when looping.")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted.")
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
 parser.set_defaults(input = "./renders/*.png")
+parser.set_defaults(palette = "./units_pylist.txt")
 parser.set_defaults(fade = 0)
 parser.set_defaults(scale = 1)
 parser.set_defaults(directions = 1)
@@ -136,7 +138,7 @@ if (args.verbose):
     print(f"Frames / direction: {amount_per_dir}")
     print(f"Total images found: {len(image_paths)}")
 
-d2pal = load_palette('./units_pylist.txt')
+d2pal = load_palette(args.palette)
 
 total_frames = 0
 
