@@ -14,11 +14,13 @@ parser.add_argument("-o", "--output", dest = "output", help = "Directory to save
 parser.add_argument("-p", "--prefix", dest = "prefix", help = "(Optional) prefix for filenames. Defaults to ''.")
 parser.add_argument("-t", "--threshold", dest = "threshold", help = "Luminosity threshold for extraction. 0 is very low threshold, 4 is high. Default is 2")
 parser.add_argument("--ext", dest = "extension", help = "Input file extension. Defaults to 'gif'")
+parser.add_argument("-a", "--animation", dest = "animation", help = "(Optional) Animation directory. Defaults to './src/animation/'")
 parser.set_defaults(compile = "True")
 parser.set_defaults(input = "./in/")
 parser.set_defaults(output = "./out/")
 parser.set_defaults(threshold = "2")
 parser.set_defaults(extension = "gif")
+parser.set_defaults(animation = "./src/animation/")
 args = parser.parse_args()
 
 # Get and check paths
@@ -27,6 +29,17 @@ if not os.path.exists(args.input):
     quit()
 if not os.path.exists(args.output):
     print(f"Error: Invalid --output argument. Output directory not found: '{args.output}'")
+    quit()
+
+print(f"Animation: {args.animation}")
+animationDirectory = "./src/animation/"
+if (args.animation != None):
+    animationDirectory = f"{args.animation}"
+
+if os.path.exists(f"{animationDirectory}0000.png"):
+    print(f"Animations from '{animationDirectory}'")
+elif (args.compile == "True"):
+    print(f"Can't find valid animations: '{animationDirectory}0000.png'")
     quit()
 
 prefixDirectory = ""
@@ -40,16 +53,25 @@ if (args.prefix != None):
     if not os.path.exists(directory):
         os.mkdir(directory)
         print(f"Created directory '{prefixDirectory}'")
+    else:
+        print(f"Using directory '{prefixDirectory}'")
 
     # If compiling, make a /diff directory in the output as well
     if not os.path.exists(f"{directory}/diff"):
         os.mkdir(f"{directory}/diff")
         print(f"Created directory '{prefixDiffDirectory}'")
+    else:
+        print(f"Using /diff directory '{prefixDiffDirectory}'")
 
     # Check if input dir exists
     if not os.path.exists(f"{args.input}{args.prefix}"):
         print(f"Error: Can't find prefixed input directory '{args.input}{prefixDirectory}'")
         quit()
+else:
+    # If compiling, make a /diff directory in the output as well
+    if not os.path.exists(f"{args.output}/diff"):
+        os.mkdir(f"{args.output}/diff")
+        print(f"Created directory '{args.output}/diff'")
 
 compileActiveName = "0000"
 compileCompleteName = "0024"
@@ -65,6 +87,10 @@ if (args.prefix != None):
     elif os.path.exists(f"{args.input}{prefixDirectory}active.{args.extension}"):
         compileActiveName = "active"
         compileCompleteName = "complete"
+elif os.path.exists(f"{args.input}active.{args.extension}"):
+    compileActiveName = "active"
+    compileCompleteName = "complete"
+
 
 # Preparation
 imgFrame = Image.open("./src/frame_empty.png").convert("RGBA")
@@ -106,11 +132,18 @@ def do_extract():
     def extract_frame(index: int, fromImage: Image.Image, threshold: int):
         # Open frame
         imgIndex = Image.open(f"{args.input}{prefixDirectory}{prefixDashed}{index:04}.{args.extension}").convert("RGBA")
-        print(f'Image: {index:04}')
+        print(f'Extract image: {index:04}')
 
         # If we have a /diff directory in input, use that frame instead for diffing.
         if (os.path.exists(f"{args.input}{prefixDiffDirectory}{prefixDashed}0000.{args.extension}")):
-            imgDiffIndex = Image.open(f"{args.input}{prefixDirectory}{prefixDashed}{index:04}.{args.extension}").convert("RGBA")
+            imgDiffIndex = Image.open(f"{args.input}{prefixDiffDirectory}{prefixDashed}{index:04}.{args.extension}").convert("RGBA")
+            print(f'...using /diff/ image')
+            imgInactiveCorrected.paste(imgDiffIndex, None, imgDiffIndex)
+            imgDiffIndex.close()
+        # /diff output from compilation results in .png's by default. Check this regardless of extension input
+        elif (os.path.exists(f"{args.input}{prefixDiffDirectory}{prefixDashed}0000.png")):
+            imgDiffIndex = Image.open(f"{args.input}{prefixDiffDirectory}{prefixDashed}{index:04}.png").convert("RGBA")
+            print(f'...using /diff/ image')
             imgInactiveCorrected.paste(imgDiffIndex, None, imgDiffIndex)
             imgDiffIndex.close()
 
@@ -180,7 +213,7 @@ def do_compile():
 
     def compile_frame(index: int, fromImage: Image.Image, contrast: int, brightness: int):
         # Open animation frame
-        imgAnim = Image.open(f"./src/animation/{index:04}.png").convert("RGBA")
+        imgAnim = Image.open(f"{args.animation}{index:04}.png").convert("RGBA")
         print(f'Image: {index:04}')
 
         # Clean output
@@ -193,10 +226,12 @@ def do_compile():
 
         # Save output
         outC.paste(imgFrame, None, imgFrame)
-        outC.save(f"{args.output}{prefixDirectory}diff/{prefixDashed}{index:04}.png")
+        outC.save(f"{args.output}{prefixDiffDirectory}{prefixDashed}{index:04}.png")
 
         # Clone and sharpen anim frame
-        imgAnimSharpen = ImageEnhance.Sharpness(imgAnim).enhance(1.3)
+        out.paste(blk)
+        out.paste(imgAnim, None, imgAnim)
+        imgAnimSharpen = ImageEnhance.Sharpness(out).enhance(1.3)
 
         # Save output
         outC = ImageChops.lighter(outC, imgAnimSharpen)

@@ -27,6 +27,7 @@ This script will, given a single quest icon image in the 'active' state, generat
 -i / --input: Directory to search for input images. Defaults to './in/'
 -o / --output: Directory to save output images. Defaults to './out/'
 -p / --prefix: (Optional) Name prefix for images. Default is empty.
+-a / --animation: (Optional) Use animation source frames. Default is './src/animation'. A provided alternative is './src/animation_a5' for the blue flames animation of Act 5.
 --ext: Input file extension. Defaults to "gif", can also be "png" for instance
 ```
 
@@ -61,11 +62,13 @@ And generates `./out/a1q1/0000.png` through `./out/a1q1/0024.png`, as well as `.
 Here are the steps I took to generate `./src/animation/`, using an example prefix `a1q6`:
 
 1. Put your frames to extract from in `./in/a1q6/...`, such as `./in/a1q6/0000.gif` and onwards.
-2. Run `python3 ./d2questicon.py -p a1q6 -c False -t 2`
-3. Copy the generated `./out/a1q6/diff/` directory and put it in `./in/a1q6/` to make `./in/a1q6/diff/`
-4. This will now use these generated images to separate out the animation
-5. Run `python3 ./d2questicon.py -p a1q6 -c False -t 0` (more strict)
-6. Now you can use `./out/a1q6/*.png` as final animation images.
-7. I did some very minor manual clean-up to make the animation slightly more consistent.
-8. If you want to use these for the compilation part of this script, copy them to `./src/animation/` and follow the existing name convention. Make sure this directory has (an empty) `0000.png`, `0025.png`, and `0026.png` as is currently the case. Then you can run the compile part of the script and it will use your newly extracted animation.
-9. If you want to instead use the animation manually, use a `lighten` blend mode to blend it with base images.
+2. Run a compile first, `python3 ./d2questicon.py -p a1q6`, but ignore the direct output.
+3. Instead, take the `./out/diff` folder and put that in `./in/a1q6/diff`. We will use this to improve the differentiation during extraction.
+4. Run `python3 ./d2questicon.py -p a1q6 -c False -t 2`
+5. Copy the generated `./out/a1q6/diff/` directory and put it in `./in/a1q6/` to make `./in/a1q6/diff/`
+6. This will now use these generated images to separate out the animation
+7. Run `python3 ./d2questicon.py -p a1q6 -c False -t 0` (more strict)
+8. Now you can use `./out/a1q6/*.png` as final animation images.
+9. I did some very minor manual clean-up to make the animation slightly more consistent.
+10. If you want to use these for the compilation part of this script, copy them to `./src/animation/` and follow the existing name convention. Make sure this directory has (an empty) `0000.png`, `0025.png`, and `0026.png` as is currently the case. Then you can run the compile part of the script and it will use your newly extracted animation.
+11. If you want to instead use the animation manually, use a `lighten` blend mode to blend it with base images.
