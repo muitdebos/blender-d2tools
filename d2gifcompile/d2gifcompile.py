@@ -84,12 +84,14 @@ parser.add_argument("-d", "--directions", dest = "directions", type = int, help=
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted.")
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
+parser.add_argument("-sf", "--save-frames", dest = "saveframes", action='store_true', help = "Save individual frames in .gif format as well.")
 parser.set_defaults(input = "./renders/*.png")
 parser.set_defaults(palette = "./units_pylist.txt")
 parser.set_defaults(fade = 0)
 parser.set_defaults(scale = 1)
 parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
+parser.set_defaults(saveframes = False)
 args = parser.parse_args()
 
 can_boost_brightness = args.boost_brightness
@@ -137,10 +139,16 @@ if (args.verbose):
     print(f"Directions: {args.directions}")
     print(f"Frames / direction: {amount_per_dir}")
     print(f"Total images found: {len(image_paths)}")
+    print(f"Save individual converted frames: {args.saveframes}")
 
 d2pal = load_palette(args.palette)
 
 total_frames = 0
+
+frames_directory = rootname+'_frames'
+if (args.saveframes):
+    if not os.path.exists(frames_directory):
+        os.mkdir(frames_directory)
 
 ## Per direction, loop images if necessary, then process them and add them to the global processed_images list
 for d in range(args.directions):
@@ -207,6 +215,17 @@ for d in range(args.directions):
             print(f"[Converting to D2 palette] ...", end = " ")
         img = img.convert("RGB")
         img = img.quantize(palette=d2pal,dither=Image.NONE)
+
+        if (args.saveframes):
+            img.save(f"{frames_directory}/{rootname}_{total_frames}.gif",
+                background = 0,
+                transparency = 255,
+                disposal = 2, # No need to dispose because every image has black background
+                save_all = True, 
+                optimize = False,
+                palette = d2pal,
+                loop = 0,
+                duration = 0)
 
         processed_images.append(img)
         total_frames += 1
