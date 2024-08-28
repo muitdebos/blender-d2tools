@@ -107,6 +107,9 @@ if (args.output == None):
     split_path = os.path.basename(image_paths[0]).split('_')
     if (len(split_path) > 0):
         rootname = split_path[0]
+        rootsplit = rootname.split('.')
+        if (len(rootsplit) > 1):
+            rootname = rootsplit[0]
     else:
         rootname = "results"
 
@@ -189,19 +192,22 @@ for d in range(args.directions):
 
     # Process images
     for img in images_in_dir:
-        filename = img.filename
+        fullpath = img.filename
+        filetext = fullpath.split('/')[-1].split('.')
+        filename = filetext[0]
+        fileext = filetext[-1]
 
         if (args.verbose):
-            print(f"{filename}: [Processing] ...", end = " ")
+            print(f"\n{fullpath}: [Processing] ...", end = " ")
+        else:
+            print(f"{filename}.{fileext}")
 
         if (img.mode == "P"):
             img = img.convert("RGB")
 
-        print(filename)
-
         # Check to ensure we can and should boost blacks
         if (img.mode == "RGB" and can_boost_brightness):
-            print(f"\nWarning: {filename} does not have an alpha channel. Boosting blacks might not work as expected.")
+            print(f"\nWarning: {fullpath} does not have an alpha channel. Boosting blacks might not work as expected.")
         
         # If we can, boost blacks to the darkest non-transparent black in d2 color palette
         if (can_boost_brightness):
@@ -217,7 +223,7 @@ for d in range(args.directions):
         img = img.quantize(palette=d2pal,dither=Image.NONE)
 
         if (args.saveframes):
-            img.save(f"{frames_directory}/{rootname}_{total_frames}.gif",
+            img.save(f"{frames_directory}/{rootname}_{filename}.gif",
                 background = 0,
                 transparency = 255,
                 disposal = 2, # No need to dispose because every image has black background
