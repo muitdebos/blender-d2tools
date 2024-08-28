@@ -24,7 +24,12 @@
 
         <div
           class="rng-space"
-          :style="`width: ${999 * scale}px; height: ${999 * scale}px;`">
+          :style="`width: ${(6143 - 999) * scale}px; height: ${999 * scale}px; left: ${999 * scale}px;`">
+          <span :style="`${scale > 0.1 ? '' : 'display: none;'}`">Reserved for DRLG</span>
+        </div>
+        <div
+          class="rng-space"
+          :style="`width: ${999 * scale}px; height: ${6143 * scale}px;`">
           <span :style="`${scale > 0.1 ? '' : 'display: none;'}`">Reserved for DRLG</span>
         </div>
 
@@ -145,7 +150,7 @@ const mouse = useMousePosition((pos) => {
     const checkD = pos.y.value - pos.x.value > -4096;
     const checkE = pos.x.value > 0 && pos.y.value > 0;
     mouseIsOutOfBounds.value = isInViewport && !(checkA && checkB && checkC && checkD && checkE);
-    mouseIsInReserved.value = (pos.x.value > 0 && pos.y.value > 0) && (pos.x.value < 1000 && pos.y.value < 1000);
+    mouseIsInReserved.value = !mouseIsOutOfBounds.value && ((pos.x.value > 0 && pos.y.value > 0) && (pos.x.value < 1000 || pos.y.value < 1000));
 
     if (!isInViewport) {
       pos.x.value = -1;
@@ -237,7 +242,7 @@ $oobDiff4: 1024px;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
+    position: absolute;
     top: 1px;
     left: 1px;
     text-align: center;
@@ -329,6 +334,7 @@ $oobDiff4: 1024px;
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 1;
   padding: 0.5rem;
 
   .control {
@@ -339,12 +345,12 @@ $oobDiff4: 1024px;
     height: 2rem;
     border: 1px solid var(--color-border);
     border-bottom-color: var(--color-border-bottom);
-    background-color: var(--color-primary-transparent);
+    background-color: var(--color-worldmap-disabled);
     cursor: pointer;
     user-select: none;
 
     &:hover {
-      background-color: var(--color-primary-transparent-hover);
+      background-color: var(--color-worldmap-background);
     }
 
     + .control {

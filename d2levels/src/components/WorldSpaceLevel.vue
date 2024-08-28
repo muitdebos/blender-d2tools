@@ -36,9 +36,7 @@ const levelStyle = computed(() => {
 
   if (typeof props.index !== 'undefined') {
     offsetX = `left: ${-200 * props.scale}px;`;
-    offsetY = `top: ${(50 + (200 * props.index)) * props.scale}px;`;
-    sizeX = `width: ${100 * props.scale}px;`;
-    sizeY = `height: ${100 * props.scale}px;`;
+    offsetY = `top: ${(50 + (300 * props.index)) * props.scale}px;`;
   }
 
   return `${offsetY} ${offsetX} ${sizeX} ${sizeY}`;
