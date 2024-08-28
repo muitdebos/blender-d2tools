@@ -24,7 +24,7 @@
         label="Difficulty"
         :value="difficulty"
         :options="difficultyOptions"
-        @onUpdate="updateAct"/>
+        @onUpdate="updateDifficulty"/>
 
       <span>Levels: {{ actLevels.length }}</span>
     </div>
