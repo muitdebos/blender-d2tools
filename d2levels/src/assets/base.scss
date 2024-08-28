@@ -1,0 +1,50 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+:root {
+  --color-primary-bright: rgb(255, 108, 133);
+  --color-primary: rgb(233, 136, 152);
+  --color-primary-dark: rgb(183, 100, 114);
+  --color-primary-hover: rgb(255, 186, 197);
+  --color-primary-selected: rgb(242, 137, 155);
+  --color-primary-transparent: rgba(233, 136, 152, 0.2);
+  --color-primary-transparent-hover: rgba(255, 186, 197, 0.2);
+
+  --color-border-bright: rgb(150, 61, 82);
+  --color-border: rgb(128, 48, 67);
+  --color-border-bottom: rgb(104, 31, 48);
+
+  --color-worldmap-background: rgb(36, 22, 28);
+  --color-worldmap-disabled: rgba(28, 15, 18, 0.8);
+  --color-worldmap-grid: rgba(89, 53, 69, 0.2);
+  --color-worldmap-gridtext: rgb(159, 90, 120);
+}
+
+body {
+  min-height: 100vh;
+  color: white;
+  background: #1c0505;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

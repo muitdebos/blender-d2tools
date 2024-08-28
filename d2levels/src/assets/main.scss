@@ -1,0 +1,23 @@
+@import './base';
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  font-weight: normal;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color .1s;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+input:hover {
+  + .button {
+    background-color: var(--color-primary-transparent-hover);
+  }
+}
