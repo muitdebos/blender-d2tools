@@ -232,6 +232,9 @@ class VIEW3D_PT_D2ToolsRender(bpy.types.Panel):
         row = layout.row()
         row.prop(context.scene.render, "film_transparent")
         
+        row = layout.row()
+        row.prop(context.scene, "d2tools_force_world_color")
+        
         if (context.scene.d2tools_types == "D2ENT"):
             row = layout.row()
             row.operator("d2tools.ops_render")
@@ -627,10 +630,11 @@ class D2TOOLS_OT_render_ent(bpy.types.Operator):
         frame_skip = context.scene.d2tools_frame_skip + 1
         
         # If transparent, set ambient light. Otherwise set opaque background
-        if (bpy.context.scene.render.film_transparent):
-            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_ambient
-        else:
-            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
+        if (context.scene.d2tools_force_world_color):
+            if (bpy.context.scene.render.film_transparent):
+                bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_ambient
+            else:
+                bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
         
         # Render the frames for each direction
         for d in range(start_direction, end_direction + 1):
@@ -700,10 +704,11 @@ class D2TOOLS_OT_render_ent_env(bpy.types.Operator):
         rotatebox = bpy.data.objects["ROTATEBOX"]
         
         # If transparent, set ambient light. Otherwise set opaque background
-        if (bpy.context.scene.render.film_transparent):
-            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_ambient
-        else:
-            bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
+        if (context.scene.d2tools_force_world_color):
+            if (bpy.context.scene.render.film_transparent):
+                bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_ambient
+            else:
+                bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = d2tools_background
         
         if (bpy.context.scene.d2tools_env_render_types == 'D2ENV_WALL'):
             # Render only xmin to xmax with y = 0, and then ymin to ymax with x = 0
@@ -865,6 +870,12 @@ d2tools_end_direction = bpy.props.IntProperty(
     max = 31,
 )
 
+d2tools_force_world_color = bpy.props.BoolProperty(
+    name = "Force world color",
+    description = "Sets world ambient color to vanilla D2 settings on render.",
+    default = True,
+)
+
 d2tools_env_render_types = bpy.props.EnumProperty(
     name = 'Render type',
     description = 'The type of content to render',
@@ -933,6 +944,7 @@ def register():
     bpy.types.Scene.d2tools_frame_skip = d2tools_frame_skip
     bpy.types.Scene.d2tools_start_direction = d2tools_start_direction
     bpy.types.Scene.d2tools_end_direction = d2tools_end_direction
+    bpy.types.Scene.d2tools_force_world_color = d2tools_force_world_color
     bpy.types.Scene.d2tools_env_render_types = d2tools_env_render_types
     bpy.types.Scene.d2tools_wall_height = d2tools_wall_height
     bpy.types.Scene.d2tools_env_min_x = d2tools_env_min_x
@@ -953,6 +965,7 @@ def unregister():
     del bpy.types.Scene.d2tools_frame_skip
     del bpy.types.Scene.d2tools_start_direction
     del bpy.types.Scene.d2tools_end_direction
+    del bpy.types.Scene.d2tools_force_world_color
     del bpy.types.Scene.d2tools_env_render_types
     del bpy.types.Scene.d2tools_wall_height
     del bpy.types.Scene.d2tools_env_min_x

@@ -2,7 +2,7 @@ import os
 import glob
 import math
 import argparse
-from PIL import Image
+from PIL import Image, ImageOps
 
 ########
 # Defs #
@@ -60,10 +60,11 @@ def load_palette(path: str):
 
 
 # Places 'img_overlay' over 'img_src' with 'alpha' transparency
-def fade_images(src_img, overlay_img, alpha):
+def fade_images(src_img: Image.Image, overlay_img: Image.Image, mask_color):
     img = src_img.copy()
+
     # Create the mask image for this frame
-    mask_img = Image.new('RGBA', src_img.size, (0, 0, 0, alpha))
+    mask_img = Image.new('RGBA', src_img.size, mask_color)
     
     # Paste looped image on top of starting, using alpha
     img.paste(overlay_img, (0, 0), mask_img)
@@ -84,6 +85,7 @@ parser.add_argument("-d", "--directions", dest = "directions", type = int, help=
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted.")
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
+parser.add_argument("--inverted", dest = "inverted", action='store_true', help = "Uses white as background for masking. (default False)")
 parser.add_argument("-sf", "--save-frames", dest = "saveframes", action='store_true', help = "Save individual frames in .gif format as well.")
 parser.set_defaults(input = "./renders/*.png")
 parser.set_defaults(palette = "./units_pylist.txt")
@@ -92,6 +94,7 @@ parser.set_defaults(scale = 1)
 parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
 parser.set_defaults(saveframes = False)
+parser.set_defaults(inverted = False)
 args = parser.parse_args()
 
 can_boost_brightness = args.boost_brightness
@@ -141,6 +144,7 @@ if (args.verbose):
     print(f"Fade-in loop frames: {loop_amount}")
     print(f"Directions: {args.directions}")
     print(f"Frames / direction: {amount_per_dir}")
+    print(f"Using white background: {args.inverted}")
     print(f"Total images found: {len(image_paths)}")
     print(f"Save individual converted frames: {args.saveframes}")
 
@@ -174,8 +178,12 @@ for d in range(args.directions):
             loop_img = images_in_dir[loop_frame]
 
             # We skip 0 and 255 alpha's
-            alpha = round((i + 1) * 255 / (loop_amount + 1)) 
-            res_img = fade_images(src_img, loop_img, alpha)
+            alpha = round((i + 1) * 255 / (loop_amount + 1))
+            mask_color = (0, 0, 0, alpha)
+            # if (args.inverted):
+            #     mask_color = (255, 255, 255, alpha)
+            
+            res_img = fade_images(src_img, loop_img, mask_color)
             res_img.filename = src_img.filename
 
             if (args.verbose):
@@ -191,6 +199,7 @@ for d in range(args.directions):
         im.close()
 
     # Process images
+    img: Image.Image
     for img in images_in_dir:
         fullpath = img.filename
         filetext = fullpath.split('/')[-1].split('.')
@@ -198,7 +207,7 @@ for d in range(args.directions):
         fileext = filetext[-1]
 
         if (args.verbose):
-            print(f"\n{fullpath}: [Processing] ...", end = " ")
+            print(f"{filename}.{fileext}: [Processing] ...", end = " ")
         else:
             print(f"{filename}.{fileext}")
 
@@ -215,6 +224,18 @@ for d in range(args.directions):
                 print(f"[Boosting brightness] ...", end = " ")
             img = boost_brightness(img)
         
+        # If we want a white background, paste image on top of white
+        if (args.inverted):
+            white_img = Image.new('RGBA', img.size, (255, 255, 255, 1))
+            # white_img.paste((5, 5, 5, 1), (0, 0), img)
+            white_img.paste(img, (0, 0), img)
+            img_A = img.getchannel("A")
+            mask = img_A.point(lambda i: i < 20 and 255)
+            # invimg = white_img.convert('RGB')
+            # invimg = ImageOps.invert(invimg)
+            # mask = boost_brightness(mask)
+            white_img.paste((0, 0, 0, 1), (0, 0), mask)
+            img = white_img
         
         # Convert to RGB and apply D2 palette
         if (args.verbose):
