@@ -2,6 +2,7 @@ import os
 import glob
 import math
 import argparse
+import numpy as np
 from PIL import Image, ImageOps
 
 ########
@@ -83,9 +84,14 @@ parser.add_argument("-p", "--palette", dest = "palette", help = "Palette file to
 parser.add_argument("--fade", dest = "fade", type = int, help="Amount of frames to fade in the loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
 parser.add_argument("-d", "--directions", dest = "directions", type = int, help="Amount of directions. Used for splitting the images into groups when looping.")
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
-parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2. Transparent base images are never boosted.")
-parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default)")
+parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2.")
+parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default if no alpha channel is found)")
 parser.add_argument("--inverted", dest = "inverted", action='store_true', help = "Uses white as background for masking. (default False)")
+parser.add_argument("--mask", dest = "mask", action='store_true', help = "If set, uses a grayscale version of the frame as alpha channel. (default False)")
+parser.add_argument("--hue", dest = "hsl_hue", type = int, help = "Amount to shift the hue by, from 0 to 255.")
+parser.add_argument("--saturation", dest = "hsl_saturation", type = float, help = "Amount to multiply saturation by. 0 to 4")
+parser.add_argument("--value", dest = "hsl_value", type = int, help = "Amount to add to brightness value. -255 to 255")
+parser.add_argument("--contrast", dest = "hsl_contrast", type = float, help = "Amount to multiply brightness value by. 0 to 4")
 parser.add_argument("-sf", "--save-frames", dest = "saveframes", action='store_true', help = "Save individual frames in .gif format as well.")
 parser.set_defaults(input = "./renders/*.png")
 parser.set_defaults(palette = "./units_pylist.txt")
@@ -95,7 +101,17 @@ parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
 parser.set_defaults(saveframes = False)
 parser.set_defaults(inverted = False)
+parser.set_defaults(mask = False)
+parser.set_defaults(hsl_hue = 0)
+parser.set_defaults(hsl_saturation = 1)
+parser.set_defaults(hsl_value = 0)
+parser.set_defaults(hsl_contrast = 1)
 args = parser.parse_args()
+
+hsl_hue = args.hsl_hue
+hsl_saturation = max(min(args.hsl_saturation, 4), 0)
+hsl_value = max(min(args.hsl_value, 255), -255)
+hsl_contrast = max(min(args.hsl_contrast, 4), 0)
 
 can_boost_brightness = args.boost_brightness
 
@@ -167,6 +183,29 @@ for d in range(args.directions):
 
     images_in_dir = load_images(dir_imagepaths)
 
+    # Apply self-mask
+    if (args.mask):
+        print("Masking out the images using lightness as masking value")
+        base_hue = hsl_hue
+
+        img: Image.Image
+        for index, img in enumerate(images_in_dir):
+            img_rgb = img.convert('RGB')
+            img_mask = img.convert('L')
+
+            # Use white as transparent instead
+            if (args.inverted):
+                img_rgb = ImageOps.invert(img_rgb)
+                # By default, change hue back to original hue before inversion
+                hsl_hue = base_hue + 127
+
+            # Re-apply greyscale alpha mask
+            img_rgba = img_rgb.convert('RGBA')
+            img_rgba.putalpha(img_mask)
+
+            img_rgba.filename = img.filename
+            images_in_dir[index] = img_rgba
+
     # Loop additional images, keeping in mind the directions
     if (loop_amount > 0 and len(images_in_dir) > loop_amount):
         loop_start = len(images_in_dir) - loop_amount
@@ -180,9 +219,7 @@ for d in range(args.directions):
             # We skip 0 and 255 alpha's
             alpha = round((i + 1) * 255 / (loop_amount + 1))
             mask_color = (0, 0, 0, alpha)
-            # if (args.inverted):
-            #     mask_color = (255, 255, 255, alpha)
-            
+
             res_img = fade_images(src_img, loop_img, mask_color)
             res_img.filename = src_img.filename
 
@@ -227,16 +264,27 @@ for d in range(args.directions):
         # If we want a white background, paste image on top of white
         if (args.inverted):
             white_img = Image.new('RGBA', img.size, (255, 255, 255, 1))
-            # white_img.paste((5, 5, 5, 1), (0, 0), img)
             white_img.paste(img, (0, 0), img)
             img_A = img.getchannel("A")
-            mask = img_A.point(lambda i: i < 20 and 255)
-            # invimg = white_img.convert('RGB')
-            # invimg = ImageOps.invert(invimg)
-            # mask = boost_brightness(mask)
+            mask = img_A.point(lambda i: i < 2 and 255)
             white_img.paste((0, 0, 0, 1), (0, 0), mask)
             img = white_img
-        
+
+        # Apply hue / saturation changes (don't do masked, that happened earlier in the masking step)
+        if (hsl_hue != 0 or hsl_saturation != 1 or hsl_value != 0 or hsl_contrast != 1):
+            img = img.convert("HSV")
+            img_split = img.split()
+            if (hsl_hue != 0):
+                new_hues = img_split[0].point(lambda i: (i + hsl_hue) % 255)
+                img_split[0].paste(new_hues)
+            if (hsl_saturation != 1):
+                new_sats = img_split[1].point(lambda i: i * hsl_saturation)
+                img_split[1].paste(new_sats)
+            if (hsl_value != 0 or hsl_contrast != 1):
+                new_sats = img_split[2].point(lambda i: ((i + hsl_value) * hsl_contrast))
+                img_split[2].paste(new_sats)
+            img = Image.merge(img.mode, img_split)
+            
         # Convert to RGB and apply D2 palette
         if (args.verbose):
             print(f"[Converting to D2 palette] ...", end = " ")
