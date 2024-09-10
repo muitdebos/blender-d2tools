@@ -79,7 +79,7 @@ def fade_images(src_img: Image.Image, overlay_img: Image.Image, mask_color):
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", dest = "input", help = "Glob string to search the files for. Defaults to './renders/*.png'")
 parser.add_argument("-o", "--output", dest = "output", help = "Name of resulting animated .gif. Defaults to first image like so: @1TRLITNUHTH_0_0001.png becomes @1TRLITNUHTH.gif.")
-parser.add_argument("-s", "--scale", dest = "scale", help = "Scale images by amount (default 1)")
+parser.add_argument("-s", "--scale", dest = "scale", type = float, help = "Scale images by amount (default 1)")
 parser.add_argument("-p", "--palette", dest = "palette", help = "Palette file to use. Default is './units_pylist.txt'. Needs to be a txt file where every line is one color value (e.g. RR\\nGG\\nBB\\nRR\\nGG\\BB\\..etc)")
 parser.add_argument("--fade", dest = "fade", type = int, help="Amount of frames to fade in the loop. Reduces total frame count, but fades together this amount of frames to create a more seamless loop.")
 parser.add_argument("-d", "--directions", dest = "directions", type = int, help="Amount of directions. Used for splitting the images into groups when looping.")
@@ -263,6 +263,8 @@ for d in range(args.directions):
         
         # If we want a white background, paste image on top of white
         if (args.inverted):
+            if (args.verbose):
+                print(f"[Applying inversion] ...", end = " ")
             white_img = Image.new('RGBA', img.size, (255, 255, 255, 1))
             white_img.paste(img, (0, 0), img)
             img_A = img.getchannel("A")
@@ -272,6 +274,8 @@ for d in range(args.directions):
 
         # Apply hue / saturation changes (don't do masked, that happened earlier in the masking step)
         if (hsl_hue != 0 or hsl_saturation != 1 or hsl_value != 0 or hsl_contrast != 1):
+            if (args.verbose):
+                print(f"[Applying HSL changes] ...", end = " ")
             img = img.convert("HSV")
             img_split = img.split()
             if (hsl_hue != 0):
@@ -284,6 +288,14 @@ for d in range(args.directions):
                 new_sats = img_split[2].point(lambda i: ((i + hsl_value) * hsl_contrast))
                 img_split[2].paste(new_sats)
             img = Image.merge(img.mode, img_split)
+
+        if (args.scale != 1):
+            if (args.verbose):
+                print(f"[Applying scaling] ...", end = " ")
+            width, height = img.size
+            width = int(width * args.scale)
+            height = int(height * args.scale)
+            img = img.resize((width, height), Image.Resampling.NEAREST)
             
         # Convert to RGB and apply D2 palette
         if (args.verbose):
