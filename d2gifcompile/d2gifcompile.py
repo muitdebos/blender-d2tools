@@ -3,7 +3,13 @@ import glob
 import math
 import argparse
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, GifImagePlugin
+
+# Override this function to prevent deduplication of consecutive frames that are exactly the same
+# More info: https://github.com/python-pillow/Pillow/issues/8397
+def _getbbox(base_im, im_frame):
+    return None, (0, 0) + im_frame.size
+GifImagePlugin._getbbox = _getbbox
 
 ########
 # Defs #
@@ -25,8 +31,6 @@ def boost_brightness(img: Image.Image):
     # Use the mask to only apply to the content
     if (has_A):
         black.paste(brighter, None, mask)
-        #img.paste(brighter, None)
-        #img.paste(brighter, None, mask)
     
     return black
 
@@ -72,6 +76,21 @@ def fade_images(src_img: Image.Image, overlay_img: Image.Image, mask_color):
 
     return img
 
+# Checks if an image has transparency  https://stackoverflow.com/a/58567453
+def has_transparency(img):
+    if img.info.get("transparency", None) is not None:
+        return True
+    if img.mode == "P":
+        transparent = img.info.get("transparency", -1)
+        for _, index in img.getcolors():
+            if index == transparent:
+                return True
+    elif img.mode == "RGBA":
+        extrema = img.getextrema()
+        if extrema[3][0] < 255:
+            return True
+
+    return False
 ########
 # Main #
 ########
@@ -86,8 +105,9 @@ parser.add_argument("-d", "--directions", dest = "directions", type = int, help=
 parser.add_argument("--verbose", dest = "verbose", action='store_true', help = "Verbose logging")
 parser.add_argument("--boost", dest = "boost_brightness", action='store_true', help = "Boosts the brightness the tiniest amount to make full black not transparent in Diablo 2.")
 parser.add_argument("--noboost", dest = "boost_brightness", action='store_false', help = "(Default if no alpha channel is found)")
-parser.add_argument("--inverted", dest = "inverted", action='store_true', help = "Uses white as background for masking. (default False)")
 parser.add_argument("--mask", dest = "mask", action='store_true', help = "If set, uses a grayscale version of the frame as alpha channel. (default False)")
+parser.add_argument("--inverted-mask", dest = "inverted_mask", action='store_true', help = "Uses white as background for masking. (default False)")
+parser.add_argument("--invert", dest = "invert", action='store_true', help = "Inverts the colors (before any other HSL operation). (default False)")
 parser.add_argument("--hue", dest = "hsl_hue", type = int, help = "Amount to shift the hue by, from 0 to 255.")
 parser.add_argument("--saturation", dest = "hsl_saturation", type = float, help = "Amount to multiply saturation by. 0 to 4")
 parser.add_argument("--value", dest = "hsl_value", type = int, help = "Amount to add to brightness value. -255 to 255")
@@ -100,8 +120,9 @@ parser.set_defaults(scale = 1)
 parser.set_defaults(directions = 1)
 parser.set_defaults(boost_brightness = False)
 parser.set_defaults(saveframes = False)
-parser.set_defaults(inverted = False)
+parser.set_defaults(inverted_mask = False)
 parser.set_defaults(mask = False)
+parser.set_defaults(invert = False)
 parser.set_defaults(hsl_hue = 0)
 parser.set_defaults(hsl_saturation = 1)
 parser.set_defaults(hsl_value = 0)
@@ -160,7 +181,8 @@ if (args.verbose):
     print(f"Fade-in loop frames: {loop_amount}")
     print(f"Directions: {args.directions}")
     print(f"Frames / direction: {amount_per_dir}")
-    print(f"Using white background: {args.inverted}")
+    print(f"Mask using lightness: {args.mask}")
+    print(f"...using white background instead: {args.inverted_mask}")
     print(f"Total images found: {len(image_paths)}")
     print(f"Save individual converted frames: {args.saveframes}")
 
@@ -194,7 +216,7 @@ for d in range(args.directions):
             img_mask = img.convert('L')
 
             # Use white as transparent instead
-            if (args.inverted):
+            if (args.inverted_mask):
                 img_rgb = ImageOps.invert(img_rgb)
                 # By default, change hue back to original hue before inversion
                 hsl_hue = base_hue + 127
@@ -249,7 +271,10 @@ for d in range(args.directions):
             print(f"{filename}.{fileext}")
 
         if (img.mode == "P"):
-            img = img.convert("RGB")
+            if (has_transparency(img)):
+                img = img.convert("RGBA")
+            else:
+                img = img.convert("RGB")
 
         # Check to ensure we can and should boost blacks
         if (img.mode == "RGB" and can_boost_brightness):
@@ -262,12 +287,18 @@ for d in range(args.directions):
             img = boost_brightness(img)
         
         # If we want a white background, paste image on top of white
-        if (args.inverted):
+        if (args.inverted_mask or args.invert):
             if (args.verbose):
                 print(f"[Applying inversion] ...", end = " ")
             white_img = Image.new('RGBA', img.size, (255, 255, 255, 1))
-            white_img.paste(img, (0, 0), img)
             img_A = img.getchannel("A")
+
+            if (args.invert):
+                img_inverted = ImageOps.invert(img.convert("RGB"))
+                white_img.paste(img_inverted, (0, 0), img)
+            else:
+                white_img.paste(img, (0, 0), img)
+            
             mask = img_A.point(lambda i: i < 2 and 255)
             white_img.paste((0, 0, 0, 1), (0, 0), mask)
             img = white_img
